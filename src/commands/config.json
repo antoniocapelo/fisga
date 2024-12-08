@@ -1,0 +1,39 @@
+{
+    "commands": [
+        {
+            "name": "one",
+            "command": "echo 'Hello, world!'",
+            "description": "This is a task that says hello"
+        },
+        {
+            "name": "two",
+            "args": {
+                "person": {
+                    "type": "input",
+                    "description": "Person to say hello to",
+                    "required": true
+                },
+                "from": {
+                    "type": "select",
+                    "choices": ["papá", "mamã"],
+                    "description": "Who is saying hello",
+                    "required": false
+                },
+                "languages": {
+                    "type": "checkbox",
+                    "choices": ["English", "Spanish", "Portuguese"],
+                    "description": "Select languages to greet in",
+                    "required": false
+                },
+                "loud": {
+                    "type": "confirm",
+                    "description": "Are you sure?",
+                    "default": false,
+                    "required": false
+                }
+            },
+            "command": "echo 'Hello {person} from {from} in {languages}'",
+            "description": "This is a task that says hello"
+        }
+    ]
+}
