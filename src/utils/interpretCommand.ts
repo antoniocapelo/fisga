@@ -35,9 +35,20 @@ type CommandArg = InputCommandArg | SelectCommandArg | CheckboxCommandArg | Conf
 
 interface Command {
   name: string
-  command: string
+  command?: string
   description: string
   args?: Record<string, CommandArg>
+  commands?: Command[] // Add support for nested commands
+}
+
+async function selectCommand(commands: Command[]): Promise<Command> {
+  return select({
+    message: 'Select a command to run:',
+    choices: commands.map(cmd => ({
+      name: `${cmd.name} - ${cmd.description}`,
+      value: cmd
+    }))
+  })
 }
 
 function getDefaultValueForArg(arg:CommandArg) {
@@ -53,6 +64,18 @@ function getDefaultValueForArg(arg:CommandArg) {
 
 }
 export async function interpretCommand(selectedTask: Command): Promise<void> {
+  // If this is a parent command with nested commands, present selection
+  if (selectedTask.commands) {
+    const subCommand = await selectCommand(selectedTask.commands)
+    return interpretCommand(subCommand)
+  }
+
+  // If no command specified, this is just a navigation node
+  if (!selectedTask.command) {
+    return
+  }
+
+  // Handle regular command execution
   if (!selectedTask.args) {
     return executeCommand({ command: selectedTask.command })
   }

@@ -41,7 +41,6 @@ hello friend from oclif! (./src/commands/hello/index.ts)
       }))
     })
 
-    this.log(`Selected task: ${JSON.stringify(selectedTask)}`)
     await interpretCommand(selectedTask)
   }
 }
