@@ -12,7 +12,9 @@
     "@oclif/core": "^4",
     "@oclif/plugin-help": "^6",
     "@oclif/plugin-plugins": "^5",
-    "inquirer": "^12.2.0"
+    "glob": "^11.0.0",
+    "inquirer": "^12.2.0",
+    "inquirer-autocomplete-standalone": "^0.8.1"
   },
   "devDependencies": {
     "@oclif/prettier-config": "^0.2.1",

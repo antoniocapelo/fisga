@@ -1,5 +1,9 @@
-import { input, select, confirm, checkbox } from '@inquirer/prompts'
+import { input, select, confirm, checkbox, } from '@inquirer/prompts'
+import autocomplete from 'inquirer-autocomplete-standalone';
 import { executeCommand } from './executeCommand.js'
+import * as fs from 'fs'
+import * as path from 'path'
+import { glob } from 'glob'
 
 // Base interface for all argument types
 interface BaseCommandArg {
@@ -30,8 +34,14 @@ interface ConfirmCommandArg extends BaseCommandArg {
   default?: boolean
 }
 
+// Add new regexp interface
+interface RegexpCommandArg extends BaseCommandArg {
+  type: 'regexp'
+  glob?: string // Optional glob pattern to limit search scope
+}
+
 // Union type of all possible argument types
-type CommandArg = InputCommandArg | SelectCommandArg | CheckboxCommandArg | ConfirmCommandArg
+type CommandArg = InputCommandArg | SelectCommandArg | CheckboxCommandArg | ConfirmCommandArg | RegexpCommandArg
 
 interface Command {
   name: string
@@ -51,18 +61,23 @@ async function selectCommand(commands: Command[]): Promise<Command> {
   })
 }
 
-function getDefaultValueForArg(arg:CommandArg) {
-  if (typeof arg.default !== 'undefined') {
-    return arg.default
+function fuzzyMatch(pattern: string, str: string): boolean {
+  pattern = pattern.toLowerCase()
+  str = str.toLowerCase()
+  
+  let patternIdx = 0
+  let strIdx = 0
+  
+  while (patternIdx < pattern.length && strIdx < str.length) {
+    if (pattern[patternIdx] === str[strIdx]) {
+      patternIdx++
+    }
+    strIdx++
   }
-  switch (arg.type) {
-    case 'input': return '';
-    case 'checkbox': return [];
-    case 'confirm': return false;
-    case 'select': return '';
-  }
-
+  
+  return patternIdx === pattern.length
 }
+
 export async function interpretCommand(selectedTask: Command): Promise<void> {
   // If this is a parent command with nested commands, present selection
   if (selectedTask.commands) {
@@ -84,7 +99,6 @@ export async function interpretCommand(selectedTask: Command): Promise<void> {
   
   for (const [argName, argConfig] of Object.entries(selectedTask.args)) {
     let value: any
-    const defaultValue = getDefaultValueForArg(argConfig)
 
     switch (argConfig.type) {
       case 'confirm':
@@ -126,6 +140,30 @@ export async function interpretCommand(selectedTask: Command): Promise<void> {
         })
         if (Array.isArray(value)) {
           value = value.join(',')
+        }
+        break
+
+      case 'regexp':
+        // Get all files first
+        const files = await glob(argConfig.glob || '**/*', {
+          ignore: ['node_modules/**', '.git/**'],
+          nodir: true
+        })
+
+        // Use select with dynamic filtering
+        value = await autocomplete({
+          message: argConfig.description,
+          source: async (input = '') => {
+            if (!input) return files.map(file => ({ name: file, value: file }))
+            
+            const matches = files.filter(file => fuzzyMatch(input, file))
+            return matches.map(file => ({ name: file, value: file }))
+          }
+        })
+
+        if (!value) {
+          console.log('No file selected')
+          return
         }
         break
     }
