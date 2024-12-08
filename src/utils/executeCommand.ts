@@ -2,20 +2,22 @@ import { spawn } from 'child_process'
 
 interface ExecuteCommandOptions {
   command: string
+  cwd?: string
   onReady?: {
     pattern: RegExp
     callback: () => void
   }
 }
 
-export function executeCommand({ command, onReady }: ExecuteCommandOptions): Promise<void> {
+export function executeCommand({ command, cwd, onReady }: ExecuteCommandOptions): Promise<void> {
   return new Promise((resolve, reject) => {
     // Split command into command and args
     const [cmd, ...args] = command.split(' ')
     
     const childProcess = spawn(cmd, args, {
       stdio: ['inherit', 'pipe', 'pipe'],
-      shell: true
+      shell: true,
+      cwd
     })
 
     childProcess.stdout.on('data', (data) => {

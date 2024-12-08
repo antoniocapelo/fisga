@@ -48,7 +48,8 @@ interface Command {
   command?: string
   description: string
   args?: Record<string, CommandArg>
-  commands?: Command[] // Add support for nested commands
+  commands?: Command[]
+  dirname?: string
 }
 
 async function selectCommand(commands: Command[]): Promise<Command> {
@@ -78,11 +79,20 @@ function fuzzyMatch(pattern: string, str: string): boolean {
   return patternIdx === pattern.length
 }
 
-export async function interpretCommand(selectedTask: Command): Promise<void> {
+async function getCommandDirectory(command: Command, parentDirs: string[] = []): Promise<string | undefined> {
+  return command.dirname || parentDirs[parentDirs.length - 1]
+}
+
+export async function interpretCommand(selectedTask: Command, parentDirs: string[] = []): Promise<void> {
+  const currentDirs = [...parentDirs]
+  if (selectedTask.dirname) {
+    currentDirs.push(selectedTask.dirname)
+  }
+
   // If this is a parent command with nested commands, present selection
   if (selectedTask.commands) {
     const subCommand = await selectCommand(selectedTask.commands)
-    return interpretCommand(subCommand)
+    return interpretCommand(subCommand, currentDirs)
   }
 
   // If no command specified, this is just a navigation node
@@ -90,9 +100,13 @@ export async function interpretCommand(selectedTask: Command): Promise<void> {
     return
   }
 
+  // Get working directory for command
+  const cwd = await getCommandDirectory(selectedTask, currentDirs)
+  console.log({cwd})
+
   // Handle regular command execution
   if (!selectedTask.args) {
-    return executeCommand({ command: selectedTask.command })
+    return executeCommand({ command: selectedTask.command, cwd })
   }
 
   const gatheredArgs: Record<string, string> = {}
@@ -178,5 +192,8 @@ export async function interpretCommand(selectedTask: Command): Promise<void> {
     finalCommand = finalCommand.replace(`{${argName}}`, value)
   }
 
-  return executeCommand({ command: finalCommand })
+  return executeCommand({ 
+    command: finalCommand,
+    cwd     // Pass the working directory
+  })
 }
