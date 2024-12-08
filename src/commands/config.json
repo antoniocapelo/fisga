@@ -3,7 +3,7 @@
         {
             "name": "git",
             "description": "Git related commands",
-            "dirname": "/home/capelo/workspace/fisga",
+            "dirname": "{CONFIG.WORKSPACE}/fisga",
             "commands": [
                 {
                     "name": "add",

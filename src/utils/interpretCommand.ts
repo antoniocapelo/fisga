@@ -4,6 +4,7 @@ import { executeCommand } from './executeCommand.js'
 import * as fs from 'fs'
 import * as path from 'path'
 import { glob } from 'glob'
+import * as os from 'os'
 
 // Base interface for all argument types
 interface BaseCommandArg {
@@ -83,6 +84,17 @@ async function getCommandDirectory(command: Command, parentDirs: string[] = []):
   return command.dirname || parentDirs[parentDirs.length - 1]
 }
 
+// Add this function to load user config
+async function loadUserConfig(): Promise<Record<string, string>> {
+  const configPath = path.join(os.homedir(), '.config', 'fisga', 'user-config.json')
+  try {
+    const config = await fs.promises.readFile(configPath, 'utf-8')
+    return JSON.parse(config)
+  } catch (error) {
+    return {}
+  }
+}
+
 export async function interpretCommand(selectedTask: Command, parentDirs: string[] = []): Promise<void> {
   const currentDirs = [...parentDirs]
   if (selectedTask.dirname) {
@@ -100,17 +112,28 @@ export async function interpretCommand(selectedTask: Command, parentDirs: string
     return
   }
 
-  // Get working directory for command
-  const cwd = await getCommandDirectory(selectedTask, currentDirs)
-  console.log({cwd})
+  // Load user config early
+  const userConfig = await loadUserConfig()
+
+  // Get working directory and replace config placeholders
+  let cwd = await getCommandDirectory(selectedTask, currentDirs)
+  if (cwd) {
+    for (const [key, value] of Object.entries(userConfig)) {
+      cwd = cwd.replace(`{CONFIG.${key}}`, value)
+    }
+  }
 
   // Handle regular command execution
   if (!selectedTask.args) {
-    return executeCommand({ command: selectedTask.command, cwd })
+    let finalCommand = selectedTask.command
+    for (const [key, value] of Object.entries(userConfig)) {
+      finalCommand = finalCommand.replace(`{CONFIG.${key}}`, value)
+    }
+    return executeCommand({ command: finalCommand, cwd })
   }
 
   const gatheredArgs: Record<string, string> = {}
-  
+   
   for (const [argName, argConfig] of Object.entries(selectedTask.args)) {
     let value: any
 
@@ -121,7 +144,7 @@ export async function interpretCommand(selectedTask: Command, parentDirs: string
           default: argConfig.default
         })
         if (!confirmed) {
-          console.log('Operation cancelled by user')
+          console.log("Operation cancelled by the user")
           return
         }
         continue
@@ -188,12 +211,19 @@ export async function interpretCommand(selectedTask: Command, parentDirs: string
   }
 
   let finalCommand = selectedTask.command
+  
+  // Replace config placeholders first
+  for (const [key, value] of Object.entries(userConfig)) {
+    finalCommand = finalCommand.replace(`{CONFIG.${key}}`, value)
+  }
+  
+  // Then replace command args
   for (const [argName, value] of Object.entries(gatheredArgs)) {
     finalCommand = finalCommand.replace(`{${argName}}`, value)
   }
 
   return executeCommand({ 
     command: finalCommand,
-    cwd     // Pass the working directory
+    cwd
   })
 }
