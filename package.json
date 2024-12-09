@@ -44,7 +44,7 @@
   ],
   "homepage": "https://github.com/workspace/fisga",
   "keywords": [
-    "oclif"
+    "fisga"
   ],
   "license": "MIT",
   "main": "dist/index.js",
@@ -52,17 +52,17 @@
   "oclif": {
     "bin": "fisga",
     "dirname": "fisga",
-    "commands": "./dist/commands",
+    "commands": {
+      "strategy": "single",
+      "target": "./dist/index.js"
+    },
+    "helpClass": "./dist/help",
     "plugins": [
       "@oclif/plugin-help",
       "@oclif/plugin-plugins"
     ],
     "topicSeparator": " ",
-    "topics": {
-      "hello": {
-        "description": "Say hello to the world and others"
-      }
-    }
+    "topics": { }
   },
   "repository": "workspace/fisga",
   "scripts": {

@@ -1,0 +1,1 @@
+{"root":["./src/default.ts","./src/help.ts","./src/index.ts","./src/commands/hello/index.ts","./src/commands/hello/world.ts","./src/utils/executeCommand.ts","./src/utils/interpretCommand.ts"],"version":"5.7.2"}

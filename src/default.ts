@@ -1,7 +1,7 @@
 import {Args, Command} from '@oclif/core'
 import * as fs from 'fs'
 import { select } from '@inquirer/prompts'
-import { interpretCommand } from '../utils/interpretCommand.js'
+import { interpretCommand } from './utils/interpretCommand.js'
 
 export default class DefaultCommand extends Command {
   static args = {
@@ -19,6 +19,7 @@ export default class DefaultCommand extends Command {
 
   async run(): Promise<void> {
     const {args} = await this.parse(DefaultCommand)
+    console.log('7oooo', args)
 
     // Read config file
     const configData = JSON.parse(fs.readFileSync(args.config, 'utf8'))
