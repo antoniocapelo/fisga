@@ -20,7 +20,7 @@ $ npm install -g fisga
 $ fisga COMMAND
 running command...
 $ fisga (--version)
-fisga/0.0.1 linux-x64 node-v20.18.1
+fisga/0.0.2 linux-x64 node-v20.18.1
 $ fisga --help [COMMAND]
 USAGE
   $ fisga COMMAND

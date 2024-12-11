@@ -1,7 +1,7 @@
 {
   "name": "fisga",
   "description": "An all-purpose task launcher",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "Capelo",
   "bin": {
     "fisga": "./bin/run.js"
@@ -62,7 +62,7 @@
       "@oclif/plugin-plugins"
     ],
     "topicSeparator": " ",
-    "topics": { }
+    "topics": {}
   },
   "repository": "workspace/fisga",
   "scripts": {
