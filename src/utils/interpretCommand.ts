@@ -42,18 +42,18 @@ interface RegexpCommandArg extends BaseCommandArg {
 }
 
 // Union type of all possible argument types
-type CommandArg = InputCommandArg | SelectCommandArg | CheckboxCommandArg | ConfirmCommandArg | RegexpCommandArg
+export type CommandArg = InputCommandArg | SelectCommandArg | CheckboxCommandArg | ConfirmCommandArg | RegexpCommandArg
 
-interface Command {
+export interface ICommand {
   name: string
   command?: string
   description: string
   args?: Record<string, CommandArg>
-  commands?: Command[]
+  commands?: ICommand[]
   dirname?: string
 }
 
-async function selectCommand(commands: Command[]): Promise<Command> {
+async function selectCommand(commands: ICommand[]): Promise<ICommand> {
   return select({
     message: 'Select a command to run:',
     choices: commands.map(cmd => ({
@@ -80,7 +80,7 @@ function fuzzyMatch(pattern: string, str: string): boolean {
   return patternIdx === pattern.length
 }
 
-async function getCommandDirectory(command: Command, parentDirs: string[] = []): Promise<string | undefined> {
+async function getCommandDirectory(command: ICommand, parentDirs: string[] = []): Promise<string | undefined> {
   return command.dirname || parentDirs[parentDirs.length - 1]
 }
 
@@ -95,7 +95,7 @@ async function loadUserConfig(): Promise<Record<string, string>> {
   }
 }
 
-export async function interpretCommand(selectedTask: Command, parentDirs: string[] = []): Promise<void> {
+export async function interpretCommand(selectedTask: ICommand, parentDirs: string[] = []): Promise<void> {
   const currentDirs = [...parentDirs]
   if (selectedTask.dirname) {
     currentDirs.push(selectedTask.dirname)

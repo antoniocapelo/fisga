@@ -1,4 +1,19 @@
 {
+    "setup": {
+        "dir": "$HOME/.config/fisga/",
+        "steps": [
+            {
+                "name": "WORKSPACE",
+                "type": "input",
+                "description": "Please provide the path for your project"
+            },
+            {
+                "name": "USE_SUDO",
+                "type": "confirm",
+                "description": "Should we use sudo?"
+            }
+        ]
+    },
     "commands": [
         {
             "name": "git",
