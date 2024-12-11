@@ -227,3 +227,94 @@ export async function interpretCommand(selectedTask: ICommand, parentDirs: strin
     cwd
   })
 }
+
+interface SetupStep {
+  name: string
+  description: string
+  type: CommandArg['type']
+  choices?: string[] // For select and checkbox types
+  default?: any
+}
+
+interface Setup {
+  dir: string
+  steps: SetupStep[]
+}
+
+export async function runSetup(setup: Setup): Promise<void> {
+  const collectedData: Record<string, any> = {}
+
+  for (const step of setup.steps) {
+    let value: any
+
+    switch (step.type) {
+      case 'input':
+        value = await input({
+          message: step.description,
+          required: true,
+          default: step.default
+        })
+        break
+
+      case 'select':
+        value = await select({
+          message: step.description,
+          choices: step.choices?.map(choice => ({
+            name: choice,
+            value: choice
+          })) || []
+        })
+        break
+
+      case 'checkbox':
+        value = await checkbox({
+          message: step.description,
+          choices: step.choices?.map(choice => ({
+            name: choice,
+            value: choice
+          })) || []
+        })
+        if (Array.isArray(value)) {
+          value = value.join(',')
+        }
+        break
+
+      case 'confirm':
+        value = await confirm({
+          message: step.description,
+          default: step.default
+        })
+        break
+
+      default:
+        console.log(`Unsupported step type: ${step.type}`)
+        continue
+    }
+
+    if (value !== undefined) {
+      collectedData[step.name] = value
+    }
+  }
+
+  // Replace $HOME with the user's home directory and add config.json
+  const configPath = path.join(
+    setup.dir.replace('$HOME', os.homedir()),
+    'config.json'
+  )
+  
+  try {
+    // Create directory if it doesn't exist
+    await fs.promises.mkdir(path.dirname(configPath), { recursive: true })
+    
+    // Write collected data to JSON file
+    await fs.promises.writeFile(
+      configPath,
+      JSON.stringify(collectedData, null, 2),
+      'utf-8'
+    )
+    
+    console.log(`Setup data saved to ${configPath}`)
+  } catch (error) {
+    console.error('Failed to save setup data:', error)
+  }
+}

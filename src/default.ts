@@ -1,11 +1,7 @@
 import { Args, Command } from '@oclif/core'
 import * as fs from 'fs'
 import { select } from '@inquirer/prompts'
-import { CommandArg, interpretCommand } from './utils/interpretCommand.js'
-
-function runSetup() {
-
-} 
+import { CommandArg, ICommand, interpretCommand, runSetup } from './utils/interpretCommand.js'
 
 type Setup = {
   dir: string;
@@ -13,11 +9,11 @@ type Setup = {
     name: string;
     description: string;
     type: CommandArg['type'];
-  }
+  }[]
 }
 
 type Config = {
-  comands: CommandArg[],
+  commands: ICommand[],
   setup: Setup
 }
 
@@ -39,13 +35,11 @@ export default class DefaultCommand extends Command {
     const { args } = await this.parse(DefaultCommand)
 
     // Read config file
-    const configData = JSON.parse(fs.readFileSync(args.config, 'utf8'))
-    runSetup
+    const configData = JSON.parse(fs.readFileSync(args.config, 'utf8')) as Config;
     const choices = configData.commands;
     choices.push({
       name: "Setup",
       description: "Run setup",
-      value: "setup"
     })
 
     // Present task options to user
@@ -58,8 +52,8 @@ export default class DefaultCommand extends Command {
       }))
     })
 
-    if (selectedTask.value === 'setup') {
-      await runSetup(configData)
+    if (selectedTask.name === 'Setup') {
+      await runSetup(configData.setup)
       return
     }
 
