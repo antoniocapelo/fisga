@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["setup", "commands"],
+  "properties": {
+    "setup": {
+      "type": "object",
+      "required": ["configFileDirname", "steps"],
+      "properties": {
+        "configFileDirname": {
+          "type": "string",
+          "description": "Path where user config will be stored. Can use $HOME"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "type", "description"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Identifier for the config value"
+              },
+              "type": {
+                "enum": ["input", "confirm", "select", "checkbox"],
+                "description": "Type of input to collect"
+              },
+              "description": {
+                "type": "string",
+                "description": "Prompt message for the user"
+              },
+              "default": {
+                "description": "Default value for the input"
+              },
+              "choices": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Options for select or checkbox types"
+              }
+            }
+          }
+        }
+      }
+    },
+    "commands": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "description"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Command identifier"
+          },
+          "description": {
+            "type": "string",
+            "description": "Command description"
+          },
+          "dirname": {
+            "type": "string",
+            "description": "Working directory for command execution. Can use {CONFIG.X}"
+          },
+          "command": {
+            "type": "string",
+            "description": "Command to execute. Can use {arg} and {CONFIG.X} placeholders"
+          },
+          "args": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "required": ["type", "description"],
+              "properties": {
+                "type": {
+                  "enum": ["input", "confirm", "select", "checkbox", "regexp"],
+                  "description": "Type of argument"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Prompt message for the argument"
+                },
+                "required": {
+                  "type": "boolean",
+                  "description": "Whether the argument is required"
+                },
+                "default": {
+                  "description": "Default value for the argument"
+                },
+                "choices": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Options for select or checkbox types"
+                },
+                "glob": {
+                  "type": "string",
+                  "description": "Glob pattern for regexp type"
+                },
+                "multi": {
+                  "type": "boolean",
+                  "description": "Allow multiple selections for regexp type"
+                }
+              }
+            }
+          },
+          "commands": {
+            "description": "Nested commands",
+            "$ref": "#/properties/commands"
+          }
+        }
+      }
+    }
+  }
+} 

@@ -1,4 +1,5 @@
 {
+    "$schema": "../schema/fisga-config.schema.json",
     "setup": {
         "configFileDirname": "$HOME/.config/fisga/",
         "steps": [
