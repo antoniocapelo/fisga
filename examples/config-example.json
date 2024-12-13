@@ -19,7 +19,7 @@
         {
             "name": "git",
             "description": "Git related commands",
-            "dirname": "{CONFIG.WORKSPACE}/mezcla",
+            "dirname": "{CONFIG.WORKSPACE}/fisga",
             "commands": [
                 {
                     "name": "add",

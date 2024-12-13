@@ -42,11 +42,11 @@ function sanitizeUserConfig(arg: any): any {
   if (typeof arg === 'string') {
     const homeDir = os.homedir()
     return arg
-    // clearing trailing dashes
-    .replace(/\/$/, '')
-    // using correct home dir for cwd
-    .replace('$HOME', homeDir)
-    .replace('~', homeDir);
+      // clearing trailing dashes
+      .replace(/\/$/, '')
+      // using correct home dir for cwd
+      .replace('$HOME', homeDir)
+      .replace('~', homeDir);
   }
 
   if (Array.isArray(arg)) {
@@ -167,9 +167,14 @@ export async function interpretCommand(selectedTask: ICommand, configFileDir: st
 
       case 'regexp':
         // Get all files first
+        const ig = argConfig.glob || []
+        const includeDir = !!argConfig.includeDirectories;
         const files = await glob(argConfig.glob || '**/*', {
-          ignore: ['node_modules/**', '.git/**'],
-          nodir: true
+          ignore: ['node_modules/**', '.git/**', ...ig],
+          nodir: !includeDir,
+          dotRelative: true,
+          cwd,
+          absolute: true
         })
 
         // Use select with dynamic filtering

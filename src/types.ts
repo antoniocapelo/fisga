@@ -31,6 +31,8 @@ interface ConfirmCommandArg extends BaseCommandArg {
 interface RegexpCommandArg extends BaseCommandArg {
   type: 'regexp'
   glob?: string // Optional glob pattern to limit search scope
+  ignore?:string[]
+  includeDirectories?:boolean
 }
 
 // Union type of all possible argument types
