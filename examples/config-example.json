@@ -1,6 +1,6 @@
 {
     "setup": {
-        "dir": "$HOME/.config/fisga/",
+        "configFileDirname": "$HOME/.config/fisga/",
         "steps": [
             {
                 "name": "WORKSPACE",
@@ -18,7 +18,7 @@
         {
             "name": "git",
             "description": "Git related commands",
-            "dirname": "{CONFIG.WORKSPACE}/fisga",
+            "dirname": "{CONFIG.WORKSPACE}/mezcla",
             "commands": [
                 {
                     "name": "add",
@@ -37,7 +37,7 @@
                     "name": "test",
                     "description": "some test",
                     "type": "input",
-                    "command": "git status"
+                    "command": "echo 'YO!' && head package.json"
                 },
                 {
                     "name": "commit",

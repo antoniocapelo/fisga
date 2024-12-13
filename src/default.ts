@@ -1,21 +1,10 @@
+import { confirm, select } from '@inquirer/prompts'
 import { Args, Command } from '@oclif/core'
 import * as fs from 'fs'
-import { select } from '@inquirer/prompts'
-import { CommandArg, ICommand, interpretCommand, runSetup } from './utils/interpretCommand.js'
-
-type Setup = {
-  dir: string;
-  steps: {
-    name: string;
-    description: string;
-    type: CommandArg['type'];
-  }[]
-}
-
-type Config = {
-  commands: ICommand[],
-  setup: Setup
-}
+import os from 'os'
+import path from 'path'
+import { interpretCommand, runSetup } from './utils/interpretCommand.js'
+import { Config } from './types.js'
 
 export default class DefaultCommand extends Command {
   static args = {
@@ -36,27 +25,52 @@ export default class DefaultCommand extends Command {
 
     // Read config file
     const configData = JSON.parse(fs.readFileSync(args.config, 'utf8')) as Config;
-    const choices = configData.commands;
-    choices.push({
-      name: "Setup",
-      description: "Run setup",
-    })
+
+    // Determine user config path from setup.dir
+    const userConfigPath = path.join(
+      configData.setup.configFileDirname.replace('$HOME', os.homedir()),
+      'config.json'
+    )
+
+
+    // Check for user config
+    try {
+      await fs.promises.access(userConfigPath)
+    } catch {
+      console.log('No user config found. Please run setup first.')
+      const runSetupNow = await confirm({
+        message: 'Would you like to run setup now?',
+        default: true
+      })
+      
+      if (runSetupNow) {
+        await runSetup(configData.setup)
+        return
+      }
+      process.exit(1)
+    }
 
     // Present task options to user
     const selectedTask: any = await select({
       message: 'Select a task to run:',
-      choices: choices.map((task: any) => ({
-        name: `${task.name}`,
-        description: task.description,
-        value: task
-      }))
+      choices: [
+        ...configData.commands.map((task: any) => ({
+          name: `${task.name}`,
+          description: task.description,
+          value: task
+        })),
+        {
+          name: 'setup',
+          description: 'Run setup again',
+          value: { name: 'setup', isSetup: true }
+        }
+      ]
     })
 
-    if (selectedTask.name === 'Setup') {
-      await runSetup(configData.setup)
-      return
+    if (selectedTask.isSetup) {
+      return runSetup(configData.setup)
     }
 
-    await interpretCommand(selectedTask)
+    await interpretCommand(selectedTask, configData.setup.configFileDirname)
   }
 }

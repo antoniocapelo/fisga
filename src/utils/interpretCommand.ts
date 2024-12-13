@@ -5,53 +5,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { glob } from 'glob'
 import * as os from 'os'
-
-// Base interface for all argument types
-interface BaseCommandArg {
-  description: string
-  required: boolean
-}
-
-// Specific interfaces for each type
-interface InputCommandArg extends BaseCommandArg {
-  type: 'input'
-  default?:string
-}
-
-interface SelectCommandArg extends BaseCommandArg {
-  type: 'select'
-  choices: string[]
-  default?: string
-}
-
-interface CheckboxCommandArg extends BaseCommandArg {
-  type: 'checkbox'
-  choices: string[]
-  default?: string[]
-}
-
-interface ConfirmCommandArg extends BaseCommandArg {
-  type: 'confirm'
-  default?: boolean
-}
-
-// Add new regexp interface
-interface RegexpCommandArg extends BaseCommandArg {
-  type: 'regexp'
-  glob?: string // Optional glob pattern to limit search scope
-}
-
-// Union type of all possible argument types
-export type CommandArg = InputCommandArg | SelectCommandArg | CheckboxCommandArg | ConfirmCommandArg | RegexpCommandArg
-
-export interface ICommand {
-  name: string
-  command?: string
-  description: string
-  args?: Record<string, CommandArg>
-  commands?: ICommand[]
-  dirname?: string
-}
+import { ICommand, Setup, SetupStep } from '../types.js';
 
 async function selectCommand(commands: ICommand[]): Promise<ICommand> {
   return select({
@@ -66,17 +20,17 @@ async function selectCommand(commands: ICommand[]): Promise<ICommand> {
 function fuzzyMatch(pattern: string, str: string): boolean {
   pattern = pattern.toLowerCase()
   str = str.toLowerCase()
-  
+
   let patternIdx = 0
   let strIdx = 0
-  
+
   while (patternIdx < pattern.length && strIdx < str.length) {
     if (pattern[patternIdx] === str[strIdx]) {
       patternIdx++
     }
     strIdx++
   }
-  
+
   return patternIdx === pattern.length
 }
 
@@ -84,18 +38,48 @@ async function getCommandDirectory(command: ICommand, parentDirs: string[] = [])
   return command.dirname || parentDirs[parentDirs.length - 1]
 }
 
-// Add this function to load user config
-async function loadUserConfig(): Promise<Record<string, string>> {
-  const configPath = path.join(os.homedir(), '.config', 'fisga', 'user-config.json')
-  try {
-    const config = await fs.promises.readFile(configPath, 'utf-8')
-    return JSON.parse(config)
-  } catch (error) {
-    return {}
+function sanitizeUserConfig(arg: any): any {
+  if (typeof arg === 'string') {
+    const homeDir = os.homedir()
+    return arg
+    // clearing trailing dashes
+    .replace(/\/$/, '')
+    // using correct home dir for cwd
+    .replace('$HOME', homeDir)
+    .replace('~', homeDir);
   }
+
+  if (Array.isArray(arg)) {
+    return (arg as any[]).map(e => sanitizeUserConfig(e))
+  }
+
+  if (typeof arg === 'object') {
+    return Object.keys(arg).reduce((prev, curr) => {
+      return {
+        ...prev,
+        [curr]: sanitizeUserConfig(arg[curr])
+      }
+    }, {})
+  }
+
+  return arg;
 }
 
-export async function interpretCommand(selectedTask: ICommand, parentDirs: string[] = []): Promise<void> {
+// Add this function to load user config
+async function loadUserConfig(setupDir: string): Promise<Record<string, any>> {
+  const homeDir = os.homedir()
+  const configPath = path.join(
+    setupDir.replace('$HOME', homeDir).replace('~', homeDir),
+    'config.json'
+  )
+
+  const userConfigFile = await fs.promises.readFile(configPath, 'utf-8')
+  const userConfigData = JSON.parse(userConfigFile);
+
+  return sanitizeUserConfig(userConfigData)
+}
+
+export async function interpretCommand(selectedTask: ICommand, configFileDir: string, parentDirs: string[] = []): Promise<void> {
   const currentDirs = [...parentDirs]
   if (selectedTask.dirname) {
     currentDirs.push(selectedTask.dirname)
@@ -104,7 +88,7 @@ export async function interpretCommand(selectedTask: ICommand, parentDirs: strin
   // If this is a parent command with nested commands, present selection
   if (selectedTask.commands) {
     const subCommand = await selectCommand(selectedTask.commands)
-    return interpretCommand(subCommand, currentDirs)
+    return interpretCommand(subCommand, configFileDir, currentDirs)
   }
 
   // If no command specified, this is just a navigation node
@@ -113,10 +97,11 @@ export async function interpretCommand(selectedTask: ICommand, parentDirs: strin
   }
 
   // Load user config early
-  const userConfig = await loadUserConfig()
+  const userConfig = await loadUserConfig(configFileDir)
 
   // Get working directory and replace config placeholders
   let cwd = await getCommandDirectory(selectedTask, currentDirs)
+
   if (cwd) {
     for (const [key, value] of Object.entries(userConfig)) {
       cwd = cwd.replace(`{CONFIG.${key}}`, value)
@@ -133,7 +118,7 @@ export async function interpretCommand(selectedTask: ICommand, parentDirs: strin
   }
 
   const gatheredArgs: Record<string, string> = {}
-   
+
   for (const [argName, argConfig] of Object.entries(selectedTask.args)) {
     let value: any
 
@@ -192,7 +177,7 @@ export async function interpretCommand(selectedTask: ICommand, parentDirs: strin
           message: argConfig.description,
           source: async (input = '') => {
             if (!input) return files.map(file => ({ name: file, value: file }))
-            
+
             const matches = files.filter(file => fuzzyMatch(input, file))
             return matches.map(file => ({ name: file, value: file }))
           }
@@ -204,41 +189,28 @@ export async function interpretCommand(selectedTask: ICommand, parentDirs: strin
         }
         break
     }
-    
+
     if (value) {
       gatheredArgs[argName] = value
     }
   }
 
   let finalCommand = selectedTask.command
-  
+
   // Replace config placeholders first
   for (const [key, value] of Object.entries(userConfig)) {
     finalCommand = finalCommand.replace(`{CONFIG.${key}}`, value)
   }
-  
+
   // Then replace command args
   for (const [argName, value] of Object.entries(gatheredArgs)) {
     finalCommand = finalCommand.replace(`{${argName}}`, value)
   }
 
-  return executeCommand({ 
+  return executeCommand({
     command: finalCommand,
     cwd
   })
-}
-
-interface SetupStep {
-  name: string
-  description: string
-  type: CommandArg['type']
-  choices?: string[] // For select and checkbox types
-  default?: any
-}
-
-interface Setup {
-  dir: string
-  steps: SetupStep[]
 }
 
 export async function runSetup(setup: Setup): Promise<void> {
@@ -298,22 +270,22 @@ export async function runSetup(setup: Setup): Promise<void> {
 
   // Replace $HOME with the user's home directory and add config.json
   const configPath = path.join(
-    setup.dir.replace('$HOME', os.homedir()),
+    setup.configFileDirname.replace('$HOME', os.homedir()),
     'config.json'
   )
-  
+
   try {
     // Create directory if it doesn't exist
     await fs.promises.mkdir(path.dirname(configPath), { recursive: true })
-    
+
     // Write collected data to JSON file
     await fs.promises.writeFile(
       configPath,
       JSON.stringify(collectedData, null, 2),
       'utf-8'
     )
-    
-    console.log(`Setup data saved to ${configPath}`)
+
+    console.log(`Setup data ${collectedData} saved to ${configPath}`)
   } catch (error) {
     console.error('Failed to save setup data:', error)
   }
