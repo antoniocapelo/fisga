@@ -20,15 +20,15 @@ export function getHelpForPath(commands: ICommand[], path: string): void {
   const match = findCommand(commands, path);
 
   if (match) {
-
     if (match?.command) {
       printHelpForCommand(match)
     }
-    if (match?.description) {
-      console.log(match.description)
-    }
 
     if (match?.commands) {
+      if (match?.description) {
+        console.log(match.description)
+      }
+
       console.log('Available commands:')
       match.commands.forEach(printHelpForCommand)
     }
