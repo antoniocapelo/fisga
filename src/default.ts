@@ -4,7 +4,20 @@ import * as fs from 'fs'
 import os from 'os'
 import path from 'path'
 import { interpretCommand, runSetup } from './utils/interpretCommand.js'
-import { Config } from './types.js'
+import { Config, ICommand } from './types.js'
+import get from 'lodash.get'
+
+function findCommand(commands: ICommand[], path: string): ICommand | undefined {
+  const [first, ...rest] = path.split('.')
+  
+  const match = commands.find(cmd => cmd.name === first)
+  if (!match) return undefined
+  
+  if (rest.length === 0) return match
+  if (!match.commands) return undefined
+  
+  return findCommand(match.commands, rest.join('.'))
+}
 
 export default class DefaultCommand extends Command {
   static args = {
@@ -20,8 +33,14 @@ export default class DefaultCommand extends Command {
     '<%= config.bin %> path/to/config.json',
   ]
 
+  static strict: boolean = false;
+
   async run(): Promise<void> {
-    const { args } = await this.parse(DefaultCommand)
+    const { args, argv } = await this.parse(DefaultCommand)
+    const remainingArgs = Array.from(argv).slice(1);
+    const argsPath = remainingArgs.join('.').replaceAll(' ', '.').replaceAll(':', '.')
+
+    this.log(`running my command with args: ${argsPath}`)
 
     // Read config file
     const configData = JSON.parse(fs.readFileSync(args.config, 'utf8')) as Config;
@@ -33,7 +52,9 @@ export default class DefaultCommand extends Command {
     )
 
 
-    // Check for user config
+    // Check for user config    // const remainingArgs = Array.from(ar    // const remainingArgs = Array.from(argv).slice(1);
+    // const argsPath = remainingArgs.join('.').replaceAll(' ', '.').replaceAll(':', '.')gv).slice(1);
+    // const argsPath = remainingArgs.join('.').replaceAll(' ', '.').replaceAll(':', '.')
     try {
       await fs.promises.access(userConfigPath)
     } catch {
@@ -48,6 +69,16 @@ export default class DefaultCommand extends Command {
         return
       }
       process.exit(1)
+    }
+
+    // check if args match a command
+  
+    this.log('getting match', argsPath)
+    const match = findCommand(configData.commands, argsPath)
+
+    if (!!match) {
+      await interpretCommand(match, configData.setup.configFileDirname)
+      return
     }
 
     // Present task options to user
