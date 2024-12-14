@@ -51,6 +51,8 @@ export interface ICommand {
 export type Config = {
   commands: ICommand[],
   setup: Setup
+  name: string;
+  description?: string;
 }
 
 export interface SetupStep {

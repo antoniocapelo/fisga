@@ -3,21 +3,9 @@ import { Args, Command } from '@oclif/core'
 import * as fs from 'fs'
 import os from 'os'
 import path from 'path'
+import { findCommand } from './findCommand.js'
+import { Config } from './types.js'
 import { interpretCommand, runSetup } from './utils/interpretCommand.js'
-import { Config, ICommand } from './types.js'
-import get from 'lodash.get'
-
-function findCommand(commands: ICommand[], path: string): ICommand | undefined {
-  const [first, ...rest] = path.split('.')
-  
-  const match = commands.find(cmd => cmd.name === first)
-  if (!match) return undefined
-  
-  if (rest.length === 0) return match
-  if (!match.commands) return undefined
-  
-  return findCommand(match.commands, rest.join('.'))
-}
 
 export default class DefaultCommand extends Command {
   static args = {
