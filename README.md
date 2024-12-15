@@ -1,12 +1,14 @@
 # Fisga
 
-Fisga is a flexible command-line tool that helps you organize and execute commands through a configurable interface. It allows you to define command structures in a JSON file and provides an interactive way to execute them.
+Fisga is a flexible command-line tool that helps you organize and execute commands through a configurable interface. It's built on top of [oclif](https://oclif.io/) and it allows you to define command structures in a JSON file and provides an interactive way to execute them.
+
+This can be useful to abstract and document project tasks such as NPM, Maven, Elixir, etc.
 
 ## Features
 
 - 🎯 **Interactive Command Selection**: Navigate through nested commands using an interactive CLI
-- ⚙️ **User Configuration**: Store user-specific settings in a config file
-- 🔍 **Fuzzy Search**: Find files and folders easily with built-in fuzzy search
+- ⚙️ **User Configuration**: Built-in _setup_ step, which stores user-specific settings in a config file
+- 🔍 **Fuzzy Search**: Select files and folders easily with built-in fuzzy search
 - 📁 **Directory Context**: Execute commands in specific directories
 - 🎛️ **Multiple Input Types**:
   - Text input
@@ -66,12 +68,26 @@ npm install -g fisga
 fisga path/to/commands.json
 ```
 
-3. If no user config exists, you'll be prompted to run the setup first.
+_Note:_ There's a `schema/fisga-config.schema.json` that can make it faster to create the config file. Just include it like:
+
+```json
+{
+  "$schema": "../schema/fisga-config.schema.json",
+  "setup": { },
+  "commands": { }
+}
+```
+
+You'll now have an interactive CLI with your own commands. Since every user will have their own use settings, this CLI can be shared amongst teams to standardize common command execution.
+
+3. Distribute it to your team/org
+
+3.1. If no user config exists, you'll be prompted to run the setup first.
 
 ## Configuration
 
 ### User Config
-- Stored at the location specified in your config file's `setup.configFileDirname`
+- It's stored in a `config.json`, at the location specified in your config file's `setup.configFileDirname`
 - Values can be referenced in commands using `{CONFIG.KEY}` syntax
 
 ### Command Types

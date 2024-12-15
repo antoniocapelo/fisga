@@ -1,1 +1,1 @@
-{"root":["./src/default.ts","./src/help.ts","./src/index.ts","./src/types.ts","./src/help/ConfigurableHelp.ts","./src/utils/executeCommand.ts","./src/utils/interpretCommand.ts"],"version":"5.7.2"}
+{"root":["./src/default.ts","./src/findCommand.ts","./src/help.ts","./src/index.ts","./src/types.ts","./src/help/ConfigurableHelp.ts","./src/utils/executeCommand.ts","./src/utils/interpretCommand.ts"],"version":"5.7.2"}

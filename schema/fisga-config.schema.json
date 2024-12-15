@@ -101,6 +101,10 @@
                 "multi": {
                   "type": "boolean",
                   "description": "Allow multiple selections for regexp type"
+                },
+                "includeDirectories": {
+                  "type": "boolean",
+                  "description": "Include directories for regexp type"
                 }
               }
             }

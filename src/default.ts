@@ -1,11 +1,13 @@
 import { confirm, select } from '@inquirer/prompts'
-import { Args, Command } from '@oclif/core'
+import { Command, Args, Flags } from '@oclif/core'
+import { parse, ParsedArgs, ParsedFlags } from '@oclif/core/lib/interfaces/parser'
 import * as fs from 'fs'
 import os from 'os'
 import path from 'path'
 import { findCommand } from './findCommand.js'
 import { Config } from './types.js'
 import { interpretCommand, runSetup } from './utils/interpretCommand.js'
+import { ArgInput, FlagInput } from '@oclif/core/interfaces'
 
 export default class DefaultCommand extends Command {
   static args = {
@@ -15,6 +17,10 @@ export default class DefaultCommand extends Command {
     }),
   }
 
+  static flags = {};
+
+
+
   static description = 'Run commands from a config file'
 
   static examples = [
@@ -22,13 +28,14 @@ export default class DefaultCommand extends Command {
   ]
 
   static strict: boolean = false;
-
   async run(): Promise<void> {
-    const { args, argv } = await this.parse(DefaultCommand)
+    const { args, argv, flags } = await this.parse(DefaultCommand)
     const remainingArgs = Array.from(argv).slice(1);
     const argsPath = remainingArgs.join('.').replaceAll(' ', '.').replaceAll(':', '.')
 
     this.log(`running my command with args: ${argsPath}`)
+
+    console.log('flags', flags)
 
     // Read config file
     const configData = JSON.parse(fs.readFileSync(args.config, 'utf8')) as Config;
@@ -39,10 +46,6 @@ export default class DefaultCommand extends Command {
       'config.json'
     )
 
-
-    // Check for user config    // const remainingArgs = Array.from(ar    // const remainingArgs = Array.from(argv).slice(1);
-    // const argsPath = remainingArgs.join('.').replaceAll(' ', '.').replaceAll(':', '.')gv).slice(1);
-    // const argsPath = remainingArgs.join('.').replaceAll(' ', '.').replaceAll(':', '.')
     try {
       await fs.promises.access(userConfigPath)
     } catch {
