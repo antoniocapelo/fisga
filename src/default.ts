@@ -1,6 +1,5 @@
 import { confirm, select } from '@inquirer/prompts'
 import { Command, Args, Flags } from '@oclif/core'
-import { parse, ParsedArgs, ParsedFlags } from '@oclif/core/lib/interfaces/parser'
 import * as fs from 'fs'
 import os from 'os'
 import path from 'path'
