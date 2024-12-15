@@ -139,6 +139,33 @@ You'll now have an interactive CLI with your own commands. Since every user will
 }
 ```
 
+### Nested commands
+```json
+{
+  "name": "Front-end",
+  "description": "FE tasks",
+    "commands": [
+      {
+        "name": "run",
+        "description": "Run app in dev mode",
+        "args": {
+          "port": {
+            "type": "input",
+            "description": "Port",
+            "default": "3000",
+            "required": default
+        }
+      },
+      {
+        "name": "build",
+        "description": "Build app",
+        "command": "npm run build"
+      }
+  ]
+}
+```
+
+
 ## License
 
 MIT
