@@ -1,6 +1,6 @@
 {
   "name": "fisga",
-  "description": "An all-purpose task launcher",
+  "description": "A CLI for building CLIs",
   "version": "0.0.9",
   "author": "Capelo",
   "bin": {
@@ -45,7 +45,9 @@
   ],
   "homepage": "https://github.com/workspace/fisga",
   "keywords": [
-    "fisga"
+    "fisga",
+    "cli",
+    "builder"
   ],
   "license": "MIT",
   "main": "dist/index.js",
