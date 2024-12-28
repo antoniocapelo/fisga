@@ -145,23 +145,51 @@ You'll now have an interactive CLI with your own commands. Since every user will
   "name": "Front-end",
   "description": "FE tasks",
     "commands": [
-      {
-        "name": "run",
-        "description": "Run app in dev mode",
-        "args": {
-          "port": {
-            "type": "input",
-            "description": "Port",
-            "default": "3000",
-            "required": default
+        {
+            "name": "git",
+            "description": "Git related commands",
+            "dirname": "{CONFIG.WORKSPACE}/fisga",
+            "commands": [
+                {
+                    "name": "add",
+                    "description": "Stage changes",
+                    "args": {
+                        "files": {
+                            "type": "regexp",
+                            "glob": "**/*",
+                            "description": "files to stage",
+                            "includeDirectories": true,
+                            "required": true
+                        }
+                    },
+                    "command": "git add {files}"
+                },
+                {
+                    "name": "push",
+                    "description": "Push changes",
+                    "command": "git push"
+                }
+            ]
+        },
+        {
+            "name": "docker",
+            "description": "Docker related commands",
+            "commands": [
+                {
+                    "name": "build",
+                    "description": "Build container",
+                    "args": {
+                        "tag": {
+                            "type": "input",
+                            "description": "Container tag",
+                            "required": true
+                        }
+                    },
+                    "command": "docker build -t {tag} ."
+                }
+            ]
         }
-      },
-      {
-        "name": "build",
-        "description": "Build app",
-        "command": "npm run build"
-      }
-  ]
+    ]
 }
 ```
 
