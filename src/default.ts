@@ -1,12 +1,12 @@
 import { confirm, select } from '@inquirer/prompts'
-import { Command, Args, Flags } from '@oclif/core'
+import { Args, Command } from '@oclif/core'
 import * as fs from 'fs'
 import os from 'os'
 import path from 'path'
 import { findCommand } from './findCommand.js'
 import { Config } from './types.js'
 import { interpretCommand, runSetup } from './utils/interpretCommand.js'
-import { ArgInput, FlagInput } from '@oclif/core/interfaces'
+import { print } from './utils/print.js'
 
 export default class DefaultCommand extends Command {
   static args = {
@@ -32,9 +32,7 @@ export default class DefaultCommand extends Command {
     const remainingArgs = Array.from(argv).slice(1);
     const argsPath = remainingArgs.join('.').replaceAll(' ', '.').replaceAll(':', '.')
 
-    this.log(`running my command with args: ${argsPath}`)
-
-    console.log('flags', flags)
+    print('flags', flags)
 
     // Read config file
     const configData = JSON.parse(fs.readFileSync(args.config, 'utf8')) as Config;
@@ -62,12 +60,11 @@ export default class DefaultCommand extends Command {
     }
 
     // check if args match a command
-  
-    this.log('getting match', argsPath)
-    const match = findCommand(configData.commands, argsPath)
+    print('getting match', argsPath)
+    const commandMatch = findCommand(configData.commands, argsPath)
 
-    if (!!match) {
-      await interpretCommand(match, configData.setup.configFileDirname)
+    if (!!commandMatch) {
+      await interpretCommand(commandMatch, configData.setup.configFileDirname)
       return
     }
 
