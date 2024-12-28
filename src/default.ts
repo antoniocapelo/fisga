@@ -146,7 +146,7 @@ export default class DefaultCommand extends Command {
 
     if (!args.config) {
       const packageJsonPath = await input({
-        message: 'Please provide the path to your package.json:',
+        message: 'No config file provided.\nIf you want to generate one based on an existing package.json, please provide its path:',
         default: 'package.json',
       });
 
