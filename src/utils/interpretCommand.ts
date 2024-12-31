@@ -221,6 +221,8 @@ export async function interpretCommand(selectedTask: ICommand, configFileDir: st
 export async function runSetup(setup: Setup): Promise<void> {
   const collectedData: Record<string, any> = {}
 
+  console.log('Running setup')
+
   for (const step of setup.steps) {
     let value: any
 

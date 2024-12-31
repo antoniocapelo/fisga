@@ -34,7 +34,7 @@ export default class DefaultCommand extends Command {
     // First pass: organize scripts into groups
     Object.entries(scripts).forEach(([name, script]) => {
       const parts = name.split(':');
-      
+
       if (parts.length === 1) {
         // Non-nested command
         rootCommands.push({
@@ -47,7 +47,7 @@ export default class DefaultCommand extends Command {
         // Nested command
         const groupName = parts[0];
         const restOfName = parts.slice(1).join(':');
-        
+
         // Initialize group if it doesn't exist
         if (!commandGroups[groupName]) {
           commandGroups[groupName] = {
@@ -84,7 +84,7 @@ export default class DefaultCommand extends Command {
 
     return rootCommands.filter(c => {
       const repeatedGroup = rootCommands.find(e => e.name === c.name && e.description !== c.description);
-      if (!repeatedGroup){
+      if (!repeatedGroup) {
         return true
       }
 
@@ -112,10 +112,10 @@ export default class DefaultCommand extends Command {
       name,
       setup: {
         configFileDirname: path.join('$HOME', '.config', name),
-        steps:[]
+        steps: []
         // Add other setup defaults as needed
       },
-      commands: this.createNestedStructure(scripts, packageJsonPath.replace('package.json',''))
+      commands: this.createNestedStructure(scripts, packageJsonPath.replace('package.json', ''))
     };
 
     // Ask user where to save the generated config
@@ -127,7 +127,7 @@ export default class DefaultCommand extends Command {
     // Ensure directory exists
     await fs.promises.mkdir(configDir, { recursive: true });
     const configPath = path.join(configDir, 'config.json');
-    
+
     // Write config file
     await fs.promises.writeFile(
       configPath,
@@ -141,7 +141,7 @@ export default class DefaultCommand extends Command {
 
   async run(): Promise<void> {
     const { args, argv, flags } = await this.parse(DefaultCommand)
-    
+
     let configData: Config;
 
     if (!args.config) {
@@ -181,7 +181,7 @@ export default class DefaultCommand extends Command {
         message: 'Would you like to run setup now?',
         default: true
       });
-      
+
       if (runSetupNow) {
         await runSetup(configData.setup);
         return;
@@ -189,11 +189,23 @@ export default class DefaultCommand extends Command {
       process.exit(1);
     }
 
+    const setupCommand = {
+      name: 'Setup',
+      description: 'Run the user setup step',
+      value: { name: 'Setup', isSetup: true }
+    }
+
     // check if args match a command
-    print('getting match', argsPath);
-    const commandMatch = findCommand(configData.commands, argsPath);
+    const commandMatch = findCommand([...configData.commands, setupCommand], argsPath);
+
+    if (argsPath.length > 1 && !commandMatch) {
+      console.log(`\nUnknown command "${argsPath}"\n`)
+    }
 
     if (!!commandMatch) {
+      if (commandMatch.name === 'Setup') {
+        return runSetup(configData.setup);
+      }
       await interpretCommand(commandMatch, configData.setup.configFileDirname);
       return;
     }
@@ -207,11 +219,7 @@ export default class DefaultCommand extends Command {
           description: task.description,
           value: task
         })),
-        {
-          name: 'setup',
-          description: 'Run setup again',
-          value: { name: 'setup', isSetup: true }
-        }
+        setupCommand
       ]
     });
 

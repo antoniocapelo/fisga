@@ -1,9 +1,11 @@
 import { ICommand } from "./types.js";
 
+  const toKebabCase = (s:string) => s.replaceAll(' ', '-').toLowerCase()
+
 export function findCommand(commands: ICommand[], path: string): ICommand | undefined {
   const [first, ...rest] = path.split('.');
 
-  const match = commands.find(cmd => cmd.name === first);
+  const match = commands.find(cmd => toKebabCase(cmd.name) === toKebabCase(first));
   if (!match) return undefined;
 
   if (rest.length === 0) return match;
