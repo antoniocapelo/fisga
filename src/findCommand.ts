@@ -28,7 +28,6 @@ export function getHelpForPath(commands: ICommand[], path: string): void {
 
     if (match?.commands) {
       if (match?.description) {
-        console.log(match.description)
       }
 
       console.log('Available commands:')
