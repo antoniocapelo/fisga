@@ -6,6 +6,7 @@ import * as path from 'path'
 import { glob } from 'glob'
 import * as os from 'os'
 import { ICommand, Setup, SetupStep } from '../types.js';
+import { print } from './print.js';
 
 async function selectCommand(commands: ICommand[]): Promise<ICommand> {
   return select({
@@ -35,6 +36,7 @@ function fuzzyMatch(pattern: string, str: string): boolean {
 }
 
 async function getCommandDirectory(command: ICommand, parentDirs: string[] = []): Promise<string | undefined> {
+  print({parentDirs})
   return command.dirname || parentDirs[parentDirs.length - 1]
 }
 
@@ -102,6 +104,8 @@ export async function interpretCommand(selectedTask: ICommand, configFileDir: st
   // Get working directory and replace config placeholders
   let cwd = await getCommandDirectory(selectedTask, currentDirs)
 
+  print('cwd', cwd)
+
   if (cwd) {
     for (const [key, value] of Object.entries(userConfig)) {
       cwd = cwd.replace(`{CONFIG.${key}}`, value)
@@ -167,6 +171,7 @@ export async function interpretCommand(selectedTask: ICommand, configFileDir: st
 
       case 'regexp':
         // Get all files first
+        print(argConfig, cwd)
         const ig = argConfig.ignore || ['']
         const includeDir = !!argConfig.includeDirectories;
         const files = await glob(argConfig.glob || '**/*', {
@@ -174,8 +179,10 @@ export async function interpretCommand(selectedTask: ICommand, configFileDir: st
           nodir: !includeDir,
           dotRelative: true,
           cwd,
-          absolute: true
+          // absolute: true
         })
+
+        print(files)
 
         // Use select with dynamic filtering
         value = await autocomplete({

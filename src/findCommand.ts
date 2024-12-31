@@ -1,6 +1,6 @@
 import { ICommand } from "./types.js";
 
-  const toKebabCase = (s:string) => s.replaceAll(' ', '-').toLowerCase()
+const toKebabCase = (s: string) => s.replaceAll(' ', '-').toLowerCase()
 
 export function findCommand(commands: ICommand[], path: string): ICommand | undefined {
   const [first, ...rest] = path.split('.');
