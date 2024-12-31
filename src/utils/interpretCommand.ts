@@ -167,7 +167,6 @@ export async function interpretCommand(selectedTask: ICommand, configFileDir: st
 
       case 'regexp':
         // Get all files first
-        console.log(argConfig.glob)
         const ig = argConfig.ignore || ['']
         const includeDir = !!argConfig.includeDirectories;
         const files = await glob(argConfig.glob || '**/*', {

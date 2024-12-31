@@ -52,7 +52,7 @@ npm install -g fisga
               "type": "regexp",
               "description": "Select files to stage",
               "glob": "**/*",
-              "multi": true
+              "ignore":["deps/", ".dist/"]
             }
           },
           "command": "git add {files}"
