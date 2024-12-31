@@ -165,8 +165,6 @@ export default class DefaultCommand extends Command {
     const remainingArgs = Array.from(argv).slice(1);
     const argsPath = remainingArgs.join('.').replaceAll(' ', '.').replaceAll(':', '.');
 
-    print('flags', flags);
-
     // Determine user config path from setup.dir
     const userConfigPath = path.join(
       configData.setup.configFileDirname.replace('$HOME', os.homedir()),
