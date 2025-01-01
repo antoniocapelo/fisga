@@ -1,0 +1,53 @@
+{
+  "name": "caps",
+  "commands": [
+    {
+      "name": "build",
+      "description": "Run npm script: shx rm -rf dist && tsc -b",
+      "command": "npm run build",
+      "dirname": ""
+    },
+    {
+      "name": "lint",
+      "description": "Run npm script: eslint . --ext .ts",
+      "command": "npm run lint",
+      "dirname": ""
+    },
+    {
+      "name": "postpack",
+      "description": "Run npm script: shx rm -f oclif.manifest.json",
+      "command": "npm run postpack",
+      "dirname": ""
+    },
+    {
+      "name": "posttest",
+      "description": "Run npm script: npm run lint",
+      "command": "npm run posttest",
+      "dirname": ""
+    },
+    {
+      "name": "prepack",
+      "description": "Run npm script: oclif manifest && oclif readme",
+      "command": "npm run prepack",
+      "dirname": ""
+    },
+    {
+      "name": "test",
+      "description": "Run npm script: mocha --forbid-only \"test/**/*.test.ts\"",
+      "command": "npm run test",
+      "dirname": ""
+    },
+    {
+      "name": "version",
+      "description": "Run npm script: oclif readme && git add README.md",
+      "command": "npm run version",
+      "dirname": ""
+    },
+    {
+      "name": "pub",
+      "description": "Run npm script: npm run build && npm publish",
+      "command": "npm run pub",
+      "dirname": ""
+    }
+  ]
+}

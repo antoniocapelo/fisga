@@ -50,7 +50,7 @@ export interface ICommand {
 
 export type Config = {
   commands: ICommand[],
-  setup: Setup
+  setup?: Setup
   name: string;
   description?: string;
 }
