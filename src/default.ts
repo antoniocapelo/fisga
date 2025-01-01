@@ -1,5 +1,5 @@
 import { input, select, confirm, checkbox, } from '@inquirer/prompts'
-import { Args, Command } from '@oclif/core'
+import { Args, Command, Flags } from '@oclif/core'
 import * as fs from 'fs'
 import os from 'os'
 import path from 'path'
@@ -7,6 +7,7 @@ import { findCommand } from './findCommand.js'
 import { Config } from './types.js'
 import { interpretCommand, runSetup } from './utils/interpretCommand.js'
 import { generateConfigFromPackageJson } from './utils/generatePackageJsonConfig.js'
+import { print } from './utils/print.js'
 
 export default class DefaultCommand extends Command {
   static args = {
@@ -16,7 +17,9 @@ export default class DefaultCommand extends Command {
     }),
   }
 
-  static flags = {};
+  static flags = {
+    package: Flags.string(),
+  };
 
   static description = 'Run commands from a config file, a package json, or generates a config file based on a package.json'
 
@@ -28,41 +31,51 @@ export default class DefaultCommand extends Command {
   static strict: boolean = false;
 
   async run(): Promise<void> {
-    const { args, argv } = await this.parse(DefaultCommand)
+    const { args, argv, flags } = await this.parse(DefaultCommand)
 
-    let configData: Config;
+    let configData: Config | undefined = undefined;
 
-    if (!args.config) {
-      console.log('No config file provided.')
-      const packageJsonPath = await input({
-        message: 'If you want to use an existing package.json, please provide its path:',
-        default: 'package.json',
-      });
+    const providedPackageJson = flags.package;
 
-      const answer = await select({
-  message: 'How do you want to use this package.json?',
-  choices: [
-    {
-      name: 'Create a config file based on my package.json',
-      value: 'yes',
-    },
-    {
-      name: 'Just present the package.json scripts in a friendly UI',
-      value: 'no',
-    }]})
+    if (providedPackageJson) {
+      console.log('Running fisga on top of an existing package.json:')
+      configData = await generateConfigFromPackageJson(providedPackageJson, false);
+    }
 
-      const createFile = answer === 'yes';
+    if (!configData) {
+      if (!args.config) {
+        console.log('No config file provided.')
+        const packageJsonPath = await input({
+          message: 'If you want to use an existing package.json, please provide its path:',
+          default: 'package.json',
+        });
 
-      try {
-        await fs.promises.access(packageJsonPath);
-        configData = await generateConfigFromPackageJson(packageJsonPath, createFile);
-      } catch (error) {
-        console.error(`Error accessing package.json at ${packageJsonPath}`);
-        process.exit(1);
+        const answer = await select({
+          message: 'How do you want to use this package.json?',
+          choices: [
+            {
+              name: 'Create a config file based on my package.json',
+              value: 'yes',
+            },
+            {
+              name: 'Just present the package.json scripts in a friendly UI',
+              value: 'no',
+            }]
+        })
+
+        const createFile = answer === 'yes';
+
+        try {
+          await fs.promises.access(packageJsonPath);
+          configData = await generateConfigFromPackageJson(packageJsonPath, createFile);
+        } catch (error) {
+          console.error(`Error accessing package.json at ${packageJsonPath}`);
+          process.exit(1);
+        }
+      } else {
+        // Existing config file logic
+        configData = JSON.parse(fs.readFileSync(args.config, 'utf8')) as Config;
       }
-    } else {
-      // Existing config file logic
-      configData = JSON.parse(fs.readFileSync(args.config, 'utf8')) as Config;
     }
 
     const remainingArgs = Array.from(argv).slice(1);
