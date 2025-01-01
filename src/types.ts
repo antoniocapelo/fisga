@@ -40,9 +40,9 @@ export type CommandArg = InputCommandArg | SelectCommandArg | CheckboxCommandArg
 
 export interface ICommand {
   name: string
-  command?: string
   description: string
   args?: Record<string, CommandArg>
+  command?: string
   commands?: ICommand[]
   dirname?: string
 }

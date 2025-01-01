@@ -6,7 +6,6 @@ import path from 'path'
 import { findCommand } from './findCommand.js'
 import { Config, ICommand } from './types.js'
 import { interpretCommand, runSetup } from './utils/interpretCommand.js'
-import { print } from './utils/print.js'
 
 export default class DefaultCommand extends Command {
   static args = {
@@ -140,7 +139,7 @@ export default class DefaultCommand extends Command {
   }
 
   async run(): Promise<void> {
-    const { args, argv, flags } = await this.parse(DefaultCommand)
+    const { args, argv } = await this.parse(DefaultCommand)
 
     let configData: Config;
 
@@ -201,10 +200,10 @@ export default class DefaultCommand extends Command {
     }
 
     if (!!commandMatch) {
-      if (commandMatch.name === 'Setup') {
+      if (commandMatch.command.name === 'Setup') {
         return runSetup(configData.setup);
       }
-      await interpretCommand(commandMatch, configData.setup.configFileDirname);
+      await interpretCommand(commandMatch.command, configData.setup.configFileDirname, commandMatch.cwd ? [commandMatch.cwd]:undefined);
       return;
     }
 
