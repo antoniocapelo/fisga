@@ -10,22 +10,22 @@ import { generateConfigFromPackageJson } from './utils/generatePackageJsonConfig
 import { print } from './utils/print.js'
 
 export default class DefaultCommand extends Command {
-  static args = {
-    config: Args.string({
-      description: 'Path to config file',
-      required: false,
-    }),
-  }
+  static args = {}
 
   static flags = {
     package: Flags.string(),
+    config: Flags.string({
+      description: 'Path to config file',
+      required: false,
+    }),
   };
 
-  static description = 'Run commands from a config file, a package json, or generates a config file based on a package.json'
+  static description = 'Run commands from a config file or generates them based on a package json'
 
   static examples = [
-    '<%= config.bin %> path/to/config.json',
-    '<%= config.bin %>  # Will prompt for package.json location',
+    '<%= config.bin %>  # Will prompt for a config file or a package.json',
+    '<%= config.bin %> --config=path/to/config.json',
+    '<%= config.bin %> --package=path/to/package.json',
   ]
 
   static strict: boolean = false;
@@ -37,13 +37,14 @@ export default class DefaultCommand extends Command {
 
     const providedPackageJson = flags.package;
 
+
     if (providedPackageJson) {
       console.log('Running fisga on top of an existing package.json:')
       configData = await generateConfigFromPackageJson(providedPackageJson, false);
     }
 
     if (!configData) {
-      if (!args.config) {
+      if (!flags.config) {
         console.log('No config file provided.')
         const packageJsonPath = await input({
           message: 'If you want to use an existing package.json, please provide its path:',
@@ -74,12 +75,12 @@ export default class DefaultCommand extends Command {
         }
       } else {
         // Existing config file logic
-        configData = JSON.parse(fs.readFileSync(args.config, 'utf8')) as Config;
+        configData = JSON.parse(fs.readFileSync(flags.config, 'utf8')) as Config;
       }
     }
 
-    const remainingArgs = Array.from(argv).slice(1);
-    const argsPath = remainingArgs.join('.').replaceAll(' ', '.').replaceAll(':', '.');
+    const cmdArgs = Array.from(argv);
+    const argsPath = cmdArgs.join('.').replaceAll(' ', '.').replaceAll(':', '.');
 
 
     const hasSetupStep = !!configData.setup;
@@ -117,6 +118,8 @@ export default class DefaultCommand extends Command {
     // check if args match a command
     const comms = hasSetupStep ? [...configData.commands, setupCommand] : configData.commands;
     const commandMatch = findCommand(comms, argsPath);
+
+    print(argsPath, commandMatch)
 
     if (argsPath.length > 1 && !commandMatch) {
       console.log(`\nUnknown command "${argsPath}"\n`)

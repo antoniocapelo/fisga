@@ -182,8 +182,6 @@ export async function interpretCommand(selectedTask: ICommand, configFileDir: st
           // absolute: true
         })
 
-        print(files)
-
         // Use select with dynamic filtering
         value = await autocomplete({
           message: argConfig.description,
