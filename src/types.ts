@@ -7,7 +7,7 @@ interface BaseCommandArg {
 // Specific interfaces for each type
 interface InputCommandArg extends BaseCommandArg {
   type: 'input'
-  default?:string
+  default?: string
 }
 
 interface SelectCommandArg extends BaseCommandArg {
@@ -36,8 +36,8 @@ interface BooleanCommandArg extends BaseCommandArg {
 interface RegexpCommandArg extends BaseCommandArg {
   type: 'regexp'
   glob?: string // Optional glob pattern to limit search scope
-  ignore?:string[]
-  includeDirectories?:boolean
+  ignore?: string[]
+  includeDirectories?: boolean
 }
 
 // Union type of all possible argument types
@@ -50,6 +50,10 @@ export interface ICommand {
   command?: string
   commands?: ICommand[]
   dirname?: string
+  onReady?: {
+    pattern?: string;
+    stdinInput?: string | RegExp;
+  }
 }
 
 

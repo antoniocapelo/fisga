@@ -1,13 +1,13 @@
 import { spawn } from 'child_process'
+import { ICommand } from '../types.js'
 
 interface ExecuteCommandOptions {
   command: string
   cwd?: string
-  onReady?: {
-    pattern: RegExp
-    callback: () => void
-  }
+  onReady?: ICommand['onReady']
 }
+
+const isRegExp = (value: any) => Object.prototype.toString.call(value) === '[object RegExp]';
 
 export function executeCommand({ command, cwd, onReady }: ExecuteCommandOptions): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -15,7 +15,6 @@ export function executeCommand({ command, cwd, onReady }: ExecuteCommandOptions)
     const [cmd, ...args] = command.split(' ')
 
     console.log(`Executing '${command}' in ${cwd || 'current directory'}`)
-
 
     const childProcess = spawn(cmd, args, {
       stdio: ['inherit', 'pipe', 'pipe'],
@@ -28,8 +27,17 @@ export function executeCommand({ command, cwd, onReady }: ExecuteCommandOptions)
       process.stdout.write(output)
 
       // Check for ready pattern if provided
-      if (onReady?.pattern && onReady.pattern.test(output)) {
-        onReady.callback()
+      if (onReady?.pattern && onReady.stdinInput) {
+        let hasMatch = true
+        if (isRegExp(onReady.pattern)) {
+          hasMatch = (onReady.pattern as unknown as RegExp).test(output);
+        } else {
+          hasMatch = (output.includes(onReady.pattern))
+        }
+
+        if (hasMatch) {
+          (childProcess.stdin as any)?.write(onReady.stdinInput)
+        }
       }
     })
 
@@ -47,6 +55,11 @@ export function executeCommand({ command, cwd, onReady }: ExecuteCommandOptions)
       } else {
         reject(new Error(`Command failed with exit code ${code}`))
       }
+    })
+
+    process.on('SIGINT', () => {
+      childProcess.kill('SIGINT');
+      process.exit(0);
     })
   })
 }
