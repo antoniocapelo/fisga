@@ -73,7 +73,7 @@
               "required": ["type", "description"],
               "properties": {
                 "type": {
-                  "enum": ["input", "confirm", "select", "checkbox", "regexp"],
+                  "enum": ["input", "confirm", "select", "checkbox", "regexp", "boolean"],
                   "description": "Type of argument"
                 },
                 "description": {

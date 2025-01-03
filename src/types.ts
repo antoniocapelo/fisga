@@ -27,6 +27,11 @@ interface ConfirmCommandArg extends BaseCommandArg {
   default?: boolean
 }
 
+interface BooleanCommandArg extends BaseCommandArg {
+  type: 'boolean'
+  default?: boolean
+}
+
 // Add new regexp interface
 interface RegexpCommandArg extends BaseCommandArg {
   type: 'regexp'
@@ -36,7 +41,7 @@ interface RegexpCommandArg extends BaseCommandArg {
 }
 
 // Union type of all possible argument types
-export type CommandArg = InputCommandArg | SelectCommandArg | CheckboxCommandArg | ConfirmCommandArg | RegexpCommandArg
+export type CommandArg = InputCommandArg | SelectCommandArg | CheckboxCommandArg | ConfirmCommandArg | RegexpCommandArg | BooleanCommandArg
 
 export interface ICommand {
   name: string

@@ -169,6 +169,12 @@ export async function interpretCommand(selectedTask: ICommand, configFileDir: st
         }
         break
 
+      case 'boolean':
+        value = await confirm({
+          message: argConfig.description,
+        })
+        break
+
       case 'regexp':
         // Get all files first
         print(argConfig, cwd)
