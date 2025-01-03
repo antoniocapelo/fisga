@@ -53,7 +53,7 @@
                             "required": true
                         },
                         "verify": {
-                            "type": "confirm",
+                            "type": "boolean",
                             "description": "Are you sure?",
                             "default": false
                         }

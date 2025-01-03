@@ -206,12 +206,14 @@ export async function interpretCommand(selectedTask: ICommand, configFileDir: st
         break
     }
 
-    if (value) {
+    if (typeof value !== 'undefined') {
       gatheredArgs[argName] = value
     }
   }
 
+
   let finalCommand = selectedTask.command
+
 
   // Replace config placeholders first
   for (const [key, value] of Object.entries(userConfig)) {
