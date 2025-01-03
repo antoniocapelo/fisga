@@ -14,6 +14,8 @@ export function executeCommand({ command, cwd, onReady }: ExecuteCommandOptions)
     // Split command into command and args
     const [cmd, ...args] = command.split(' ')
 
+    console.log(`Executing ${command} in ${cwd || 'current directory'}`)
+
     const childProcess = spawn(cmd, args, {
       stdio: ['inherit', 'pipe', 'pipe'],
       shell: true,
@@ -46,4 +48,4 @@ export function executeCommand({ command, cwd, onReady }: ExecuteCommandOptions)
       }
     })
   })
-}
+  r
