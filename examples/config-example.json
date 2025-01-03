@@ -16,8 +16,21 @@
         ]
     },
     "name": "Example",
-    "description":"A demo CLI built with Fisga",
+    "description": "A demo CLI built with Fisga",
     "commands": [
+        {
+            "name": "Conditional logging",
+            "description": "some test",
+            "type": "input",
+            "args": {
+                "decision": {
+                    "type": "boolean",
+                    "description": "True if you want to echo 'FISGA', false for 'CLI'",
+                    "required": true
+                }
+            },
+            "command": "echo \"{decision === true ? 'FISGA' : 'CLI'}\" && echo \"Done\""
+        },
         {
             "name": "git",
             "description": "Git related commands",
@@ -36,12 +49,6 @@
                         }
                     },
                     "command": "git add {files}"
-                },
-                {
-                    "name": "test",
-                    "description": "some test",
-                    "type": "input",
-                    "command": "echo 'YO!' && head package.json"
                 },
                 {
                     "name": "commit",

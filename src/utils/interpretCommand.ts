@@ -7,6 +7,7 @@ import { glob } from 'glob'
 import * as os from 'os'
 import { ICommand, Setup, SetupStep } from '../types.js';
 import { print } from './print.js';
+import { evaluateString } from './evaluateString.js';
 
 async function selectCommand(commands: ICommand[]): Promise<ICommand> {
   return select({
@@ -36,7 +37,7 @@ function fuzzyMatch(pattern: string, str: string): boolean {
 }
 
 async function getCommandDirectory(command: ICommand, parentDirs: string[] = []): Promise<string | undefined> {
-  print({parentDirs})
+  print({ parentDirs })
   return command.dirname || parentDirs[parentDirs.length - 1]
 }
 
@@ -221,9 +222,7 @@ export async function interpretCommand(selectedTask: ICommand, configFileDir: st
   }
 
   // Then replace command args
-  for (const [argName, value] of Object.entries(gatheredArgs)) {
-    finalCommand = finalCommand.replace(`{${argName}}`, value)
-  }
+  finalCommand = evaluateString(finalCommand, gatheredArgs)
 
   return executeCommand({
     command: finalCommand,

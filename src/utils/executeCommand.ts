@@ -13,9 +13,7 @@ export function executeCommand({ command, cwd, onReady }: ExecuteCommandOptions)
   return new Promise((resolve, reject) => {
     // Split command into command and args
     const [cmd, ...args] = command.split(' ')
-    
-    console.log(`Executing ${command} in ${cwd || 'current directory'}`)
-    
+
     const childProcess = spawn(cmd, args, {
       stdio: ['inherit', 'pipe', 'pipe'],
       shell: true,
