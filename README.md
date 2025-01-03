@@ -96,13 +96,13 @@ _Note:_ There's a `schema/fisga-config.schema.json` that can make it faster to c
 You'll now have an interactive CLI with your own commands. If user-specific values are needed (tokens, paths, etc), the setup step should gather them for each user, so a single CLI config can be shared amongst teams to standardize common command execution.
 
 
-Option 1: You can distrubute it by packaging your CLI in a NPM package that calls `fisga` with your custoom config. Users would then call
+**Option 1:** You can distrubute it by packaging your CLI in a NPM package that calls `fisga` with your custoom config. Users would then call
 
 ```bash
 my-custom-cli # which underneath calls fisga with your pre-defined config
 ```
 
-Option 2: Just share your `config` file with the team members. With this option, users would run their fisga CLI like:
+**Option 2:** Just share your `config` file with the team members. With this option, users would run their fisga CLI like:
 
 ```bash
 fisga --config path/to/config.json
