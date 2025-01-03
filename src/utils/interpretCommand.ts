@@ -181,6 +181,9 @@ export async function interpretCommand(selectedTask: ICommand, configFileDir: st
         print(argConfig, cwd)
         const ig = argConfig.ignore || ['']
         const includeDir = !!argConfig.includeDirectories;
+
+        console.log(`Searching in ${cwd ? cwd : 'current directory'}`)
+
         const files = await glob(argConfig.glob || '**/*', {
           ignore: ['node_modules/**', '.git/**', ...ig],
           nodir: !includeDir,
@@ -226,7 +229,8 @@ export async function interpretCommand(selectedTask: ICommand, configFileDir: st
 
   return executeCommand({
     command: finalCommand,
-    cwd
+    cwd,
+    onReady: selectedTask.onReady
   })
 }
 
