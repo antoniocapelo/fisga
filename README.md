@@ -27,6 +27,8 @@ npm install -g fisga
 
 ### Using a `config` file
 
+Using a config file is the best way to run `fisga`. It allows you to version your commands, display custom notifications, use user-specific settings, and more. 
+
 1. Create a config file (e.g., `config.json`) - you can follow the `config-example.json` file as a template:
 
 ```json
@@ -83,6 +85,8 @@ _Note:_ There's a `schema/fisga-config.schema.json` that can make it faster to c
 }
 ```
 
+**Alternatively**, if have a `package.json` file available, you can use it to generate a config file. Just run `fisga` without any arguments and you'll be prompted for a `package.json` path.
+
 2. Distribute it to your team/org
 
 You'll now have an interactive CLI with your own commands. If user-specific values are needed (tokens, paths, etc), the setup step should gather them for each user, so a single CLI config can be shared amongst teams to standardize common command execution.
@@ -99,6 +103,10 @@ $ my-custom-cli # which underneath calls fisga with your pre-defined config
 ```bash
 fisga --config path/to/config.json
 ```
+
+### Running it on top of a `package.json` file
+
+
 
 ## Configuration
 
