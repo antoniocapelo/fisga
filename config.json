@@ -1,53 +1,53 @@
 {
-  "name": "caps",
+  "name": "p",
   "commands": [
     {
       "name": "build",
       "description": "Run npm script: shx rm -rf dist && tsc -b",
       "command": "npm run build",
-      "dirname": ""
+      "dirname": "/home/capelo/workspace/fisga"
     },
     {
       "name": "lint",
       "description": "Run npm script: eslint . --ext .ts",
       "command": "npm run lint",
-      "dirname": ""
+      "dirname": "/home/capelo/workspace/fisga"
     },
     {
       "name": "postpack",
       "description": "Run npm script: shx rm -f oclif.manifest.json",
       "command": "npm run postpack",
-      "dirname": ""
+      "dirname": "/home/capelo/workspace/fisga"
     },
     {
       "name": "posttest",
       "description": "Run npm script: npm run lint",
       "command": "npm run posttest",
-      "dirname": ""
+      "dirname": "/home/capelo/workspace/fisga"
     },
     {
       "name": "prepack",
       "description": "Run npm script: oclif manifest && oclif readme",
       "command": "npm run prepack",
-      "dirname": ""
+      "dirname": "/home/capelo/workspace/fisga"
     },
     {
       "name": "test",
       "description": "Run npm script: mocha --forbid-only \"test/**/*.test.ts\"",
       "command": "npm run test",
-      "dirname": ""
+      "dirname": "/home/capelo/workspace/fisga"
     },
     {
       "name": "version",
       "description": "Run npm script: oclif readme && git add README.md",
       "command": "npm run version",
-      "dirname": ""
+      "dirname": "/home/capelo/workspace/fisga"
     },
     {
       "name": "pub",
       "description": "Run npm script: npm run build && npm publish",
       "command": "npm run pub",
-      "dirname": ""
+      "dirname": "/home/capelo/workspace/fisga"
     }
   ]
 }

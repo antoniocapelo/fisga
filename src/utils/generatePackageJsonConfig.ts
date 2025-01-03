@@ -2,6 +2,7 @@ import { input } from '@inquirer/prompts';
 import path from 'path'
 import * as fs from 'fs';
 import { Config, ICommand } from "../types.js";
+import { print } from './print.js';
 
 function createNestedStructure(scripts: Record<string, string>, dirname: string): ICommand[] {
   const rootCommands: ICommand[] = [];
@@ -83,11 +84,14 @@ export async function generateConfigFromPackageJson(packageJsonPath: string, cre
 
   const name = appName.toLocaleLowerCase().replaceAll(' ', '-')
 
+  const filePath = path.resolve(packageJsonPath.replace('package.json', '')) 
+
   // Create basic config structure
   const config: Config = {
     name,
-    commands: createNestedStructure(scripts, packageJsonPath.replace('package.json', ''))
+    commands: createNestedStructure(scripts, filePath)
   };
+
 
   if (createFile) {
     // Ask user where to save the generated config

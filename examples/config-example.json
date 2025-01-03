@@ -15,8 +15,8 @@
             }
         ]
     },
-    "name": "Example tool",
-    "description":"Foo bar etc",
+    "name": "Example",
+    "description":"A demo CLI built with Fisga",
     "commands": [
         {
             "name": "git",

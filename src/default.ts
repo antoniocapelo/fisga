@@ -8,6 +8,11 @@ import { Config } from './types.js'
 import { interpretCommand, runSetup } from './utils/interpretCommand.js'
 import { generateConfigFromPackageJson } from './utils/generatePackageJsonConfig.js'
 import { print } from './utils/print.js'
+import {readPackage} from 'read-pkg';
+
+const pkg = await readPackage()
+
+const version = pkg.version;
 
 export default class DefaultCommand extends Command {
   static args = {}
@@ -31,12 +36,11 @@ export default class DefaultCommand extends Command {
   static strict: boolean = false;
 
   async run(): Promise<void> {
-    const { args, argv, flags } = await this.parse(DefaultCommand)
+    const { argv, flags } = await this.parse(DefaultCommand)
 
     let configData: Config | undefined = undefined;
 
     const providedPackageJson = flags.package;
-
 
     if (providedPackageJson) {
       console.log('Running fisga on top of an existing package.json:')
@@ -132,6 +136,11 @@ export default class DefaultCommand extends Command {
       await interpretCommand(commandMatch.command, configData?.setup?.configFileDirname || '', commandMatch.cwd ? [commandMatch.cwd] : undefined);
       return;
     }
+
+    const description = configData.description ? ` - ${configData.description}` : ''
+
+    console.log(`${configData.name} ${description}`)
+    console.log(`version ${version}\n`)
 
     // Present task options to user
     const selectedTask: any = await select({

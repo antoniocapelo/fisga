@@ -1,8 +1,8 @@
 # Fisga
 
-Fisga is a flexible command-line tool that helps you organize and execute commands through a configurable interface. It's built on top of [oclif](https://oclif.io/) and it allows you to define command structures in a JSON file and provides an interactive way to execute them.
+Fisga is a flexible command-line tool that helps you organize and execute commands through a configurable interface. It's built on top of [oclif](https://oclif.io/) and it allows you to define command structures in a JSON file and provides an interactive way to execute them. Alternatively, it can also be fed a path to a `package.json` file and present its scripts in a friendly UI (with built-in nesting).
 
-This can be useful to abstract and document project tasks such as NPM, Maven, Elixir, etc.
+This can be useful to standardize and document project tasks such as NPM, Maven, Elixir, etc.
 
 ## Features
 
@@ -25,13 +25,20 @@ npm install -g fisga
 
 ## Usage
 
-1. Create a config file (e.g., `commands.json`):
+### Using a `config` file
+
+1. Create a config file (e.g., `config.json`) - you can follow the `config-example.json` file as a template:
+
 ```json
 {
+  // Setup is optional, only needed if your commands will depend on user settings
   "setup": {
+    // This is the path where the user config.json file will be stored
     "configFileDirname": "$HOME/.config/fisga",
+    // These are the steps that a user will be presented, to setup their local environment
     "steps": [
       {
+        // this name can then be referenced in your commands (eg: {CONFIG.workspace}) later on
         "name": "workspace",
         "description": "Enter your workspace directory",
         "type": "input",
@@ -39,10 +46,12 @@ npm install -g fisga
       }
     ]
   },
+  // These are the commands that will be presented to your users when they run the CLI
   "commands": [
     {
       "name": "git",
       "description": "Git operations",
+      // By having a "commands" (plural) property, we can created nested commands
       "commands": [
         {
           "name": "add",
@@ -55,6 +64,7 @@ npm install -g fisga
               "ignore":["deps/", ".dist/"]
             }
           },
+          // A "command" (singular) property is what defines the final command to be run
           "command": "git add {files}"
         }
       ]
@@ -63,37 +73,89 @@ npm install -g fisga
 }
 ```
 
-2. Run fisga:
-```bash
-fisga path/to/commands.json
-```
-
 _Note:_ There's a `schema/fisga-config.schema.json` that can make it faster to create the config file. Just include it like:
 
 ```json
 {
   "$schema": "../schema/fisga-config.schema.json",
   "setup": { },
-  "commands": { }
+  "commands": [ ]
 }
 ```
 
-You'll now have an interactive CLI with your own commands. Since every user will have their own use settings, this CLI can be shared amongst teams to standardize common command execution.
+2. Distribute it to your team/org
 
-3. Distribute it to your team/org
+You'll now have an interactive CLI with your own commands. If user-specific values are needed (tokens, paths, etc), the setup step should gather them for each user, so a single CLI config can be shared amongst teams to standardize common command execution.
 
-3.1. If no user config exists, you'll be prompted to run the setup first.
+
+2.1. You can distrubute it by packaging your CLI in a NPM package that calls `fisga` with your custoom config. Users would then call
+
+```bash
+$ my-custom-cli # which underneath calls fisga with your pre-defined config
+```
+
+2.2. Another option is just sharing your `config` file with the team members. With this option, users would run their fisga CLI like:
+
+```bash
+fisga --config path/to/config.json
+```
 
 ## Configuration
 
 ### User Config
+- When a `setup` property is defined in `config.json`, users are required to go through the setup steps to create the file. If no user config exists, they'll be prompted to run the setup first.
 - It's stored in a `config.json`, at the location specified in your config file's `setup.configFileDirname`
-- Values can be referenced in commands using `{CONFIG.KEY}` syntax
+- User config values can be referenced in commands using `{CONFIG.settingName}` syntax
 
 ### Command Types
-- **Simple Commands**: Direct execution without arguments
-- **Interactive Commands**: Gather user input before execution
-- **Nested Commands**: Group related commands together
+**Simple Commands**: Direct execution without arguments
+
+```json
+{
+  "name": "simple-command",
+  "description": "Builds and runs project",
+  "command": "npm run build && npm run start",
+}
+```
+
+
+**Interactive Commands**: Gather user input as arguments before execution
+```json
+{
+  "name": "Docker build",
+  "description": "Build docker container",
+  "args": {
+    // We can then reference "tag" in our command
+    "tag": {
+      "type": "input",
+      "description": "Container tag",
+      "required": true
+    }
+  },
+  "command": "docker build -t {tag} ."
+}
+```
+
+**Nested Commands**: Group related commands together
+
+```json
+{
+  "name": "Test",
+  "description": "Test tasks",
+  "commands": [
+    {
+      "name": "Unit",
+      "description": "Jest tests",
+      "command": "jest ..."
+    },
+    {
+      "name": "E2E",
+      "description": "Playwright tests",
+      "command": "playwright ..."
+    },
+  ],
+}
+```
 
 ### Argument Types
 - `input`: Text input
