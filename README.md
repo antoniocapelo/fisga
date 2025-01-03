@@ -29,7 +29,9 @@ npm install -g fisga
 
 Using a config file is the best way to run `fisga`. It allows you to version your commands, display custom notifications, use user-specific settings, and more. 
 
-1. Create a config file (e.g., `config.json`) - you can follow the `config-example.json` file as a template:
+<details>
+
+<summary>1. Create a config file (e.g., `config.json`) - you can follow the `config-example.json` file as a template</summary>
 
 ```json
 {
@@ -74,6 +76,8 @@ Using a config file is the best way to run `fisga`. It allows you to version you
   ]
 }
 ```
+</details>
+
 
 _Note:_ There's a `schema/fisga-config.schema.json` that can make it faster to create the config file. Just include it like:
 
@@ -87,30 +91,34 @@ _Note:_ There's a `schema/fisga-config.schema.json` that can make it faster to c
 
 **Alternatively**, if have a `package.json` file available, you can use it to generate a config file. Just run `fisga` without any arguments and you'll be prompted for a `package.json` path.
 
-2. Distribute it to your team/org
+**Distributing to your team/org**
 
 You'll now have an interactive CLI with your own commands. If user-specific values are needed (tokens, paths, etc), the setup step should gather them for each user, so a single CLI config can be shared amongst teams to standardize common command execution.
 
 
-2.1. You can distrubute it by packaging your CLI in a NPM package that calls `fisga` with your custoom config. Users would then call
+Option 1: You can distrubute it by packaging your CLI in a NPM package that calls `fisga` with your custoom config. Users would then call
 
 ```bash
-$ my-custom-cli # which underneath calls fisga with your pre-defined config
+my-custom-cli # which underneath calls fisga with your pre-defined config
 ```
 
-2.2. Another option is just sharing your `config` file with the team members. With this option, users would run their fisga CLI like:
+Option 2: Just share your `config` file with the team members. With this option, users would run their fisga CLI like:
 
 ```bash
 fisga --config path/to/config.json
 ```
 
-### Running it on top of a `package.json` file
+### Running `fisga` on top of a `package.json` file
 
+If you just want `fisga` do display the available scripts of a `package.json`, just pass the `--package` flag:
 
+```bash
+fisga --package path/to/package.json
+```
 
 ## Configuration
 
-### User Config
+### User settings
 - When a `setup` property is defined in `config.json`, users are required to go through the setup steps to create the file. If no user config exists, they'll be prompted to run the setup first.
 - It's stored in a `config.json`, at the location specified in your config file's `setup.configFileDirname`
 - User config values can be referenced in commands using `{CONFIG.settingName}` syntax
