@@ -17,7 +17,7 @@ export function executeCommand({ command, cwd, onReady }: ExecuteCommandOptions)
     console.log(`Executing '${command}' in ${cwd || 'current directory'}`)
 
     const childProcess = spawn(cmd, args, {
-      stdio: ['inherit', 'pipe', 'pipe'],
+      // stdio: ['inherit', 'pipe', 'pipe'],
       shell: true,
       cwd
     })
