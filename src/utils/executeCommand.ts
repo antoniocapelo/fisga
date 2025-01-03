@@ -1,4 +1,4 @@
-import { spawn } from 'child_process'
+import { spawn } from 'node:child_process'
 import { ICommand } from '../types.js'
 
 interface ExecuteCommandOptions {
@@ -28,7 +28,7 @@ export function executeCommand({ command, cwd, onReady }: ExecuteCommandOptions)
 
       // Check for ready pattern if provided
       if (onReady?.pattern && onReady.stdinInput) {
-        let hasMatch = true
+        let hasMatch = false
         if (isRegExp(onReady.pattern)) {
           hasMatch = (onReady.pattern as unknown as RegExp).test(output);
         } else {
