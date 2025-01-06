@@ -5,11 +5,12 @@ interface ExecuteCommandOptions {
   command: string
   cwd?: string
   onReady?: ICommand['onReady']
+  interactive?: boolean
 }
 
 const isRegExp = (value: any) => Object.prototype.toString.call(value) === '[object RegExp]';
 
-export function executeCommand({ command, cwd, onReady }: ExecuteCommandOptions): Promise<void> {
+export function executeCommand({ command, cwd, onReady, interactive = false }: ExecuteCommandOptions): Promise<void> {
   return new Promise((resolve, reject) => {
     // Split command into command and args
     const [cmd, ...args] = command.split(' ')
@@ -17,12 +18,12 @@ export function executeCommand({ command, cwd, onReady }: ExecuteCommandOptions)
     console.log(`Executing '${command}' in ${cwd || 'current directory'}`)
 
     const childProcess = spawn(cmd, args, {
-      // stdio: ['inherit', 'pipe', 'pipe'],
+      stdio: interactive ? ['inherit', 'pipe', 'inherit'] : ['pipe', 'pipe', 'inherit'],
       shell: true,
       cwd
     })
 
-    childProcess.stdout.on('data', (data) => {
+    childProcess.stdout?.on('data', (data) => {
       const output = data.toString()
       process.stdout.write(output)
 
@@ -39,14 +40,6 @@ export function executeCommand({ command, cwd, onReady }: ExecuteCommandOptions)
           (childProcess.stdin as any)?.write(onReady.stdinInput)
         }
       }
-    })
-
-    childProcess.stderr.on('data', (data) => {
-      process.stderr.write(data.toString())
-    })
-
-    childProcess.on('error', (error) => {
-      reject(error)
     })
 
     childProcess.on('close', (code) => {

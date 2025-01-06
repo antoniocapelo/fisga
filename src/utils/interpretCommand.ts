@@ -119,7 +119,7 @@ export async function interpretCommand(selectedTask: ICommand, configFileDir: st
     for (const [key, value] of Object.entries(userConfig)) {
       finalCommand = finalCommand.replace(`{CONFIG.${key}}`, value)
     }
-    return executeCommand({ command: finalCommand, cwd })
+    return executeCommand({ command: finalCommand, cwd, onReady: selectedTask.onReady, interactive: selectedTask.interactive })
   }
 
   const gatheredArgs: Record<string, string> = {}
@@ -230,7 +230,8 @@ export async function interpretCommand(selectedTask: ICommand, configFileDir: st
   return executeCommand({
     command: finalCommand,
     cwd,
-    onReady: selectedTask.onReady
+    onReady: selectedTask.onReady,
+    interactive: selectedTask.interactive
   })
 }
 

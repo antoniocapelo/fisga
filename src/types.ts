@@ -50,6 +50,7 @@ export interface ICommand {
   command?: string
   commands?: ICommand[]
   dirname?: string
+  interactive?: boolean
   onReady?: {
     pattern?: string;
     stdinInput?: string | RegExp;
