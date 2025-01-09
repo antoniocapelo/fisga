@@ -1,7 +1,7 @@
 {
   "name": "fisga",
   "description": "A CLI for building CLIs",
-  "version": "0.3.11",
+  "version": "0.3.12",
   "author": "Capelo",
   "bin": {
     "fisga": "./bin/run.js"
