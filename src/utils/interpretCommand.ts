@@ -5,9 +5,10 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { glob } from 'glob'
 import * as os from 'os'
-import { ICommand, Setup, SetupStep } from '../types.js';
+import { Config, ICommand, Setup, SetupStep } from '../types.js';
 import { print } from './print.js';
 import { evaluateString } from './evaluateString.js';
+import { generateCompletions, supportedShells } from './generateAutoCompletion.js';
 
 async function selectCommand(commands: ICommand[]): Promise<ICommand> {
   return select({
@@ -313,4 +314,20 @@ export async function runSetup(setup: Setup): Promise<void> {
   } catch (error) {
     console.error('Failed to save setup data:', error)
   }
+}
+
+export async function runAutocomplete(config: Config): Promise<void> {
+  const collectedData: Record<string, any> = {}
+
+  console.log('Running Autocomplete')
+
+  const value = await select({
+    message: 'Choose your shell type',
+    choices: supportedShells.map(choice => ({
+      name: choice,
+      value: choice
+    }))
+  })
+
+  return generateCompletions(config, value)
 }

@@ -1,11 +1,11 @@
-import { input, select, confirm, checkbox, } from '@inquirer/prompts'
+import { input, select, confirm } from '@inquirer/prompts'
 import { Args, Command, Flags } from '@oclif/core'
 import * as fs from 'fs'
 import os from 'os'
 import path from 'path'
 import { findCommand } from './findCommand.js'
 import { Config } from './types.js'
-import { interpretCommand, runSetup } from './utils/interpretCommand.js'
+import { interpretCommand, runAutocomplete, runSetup } from './utils/interpretCommand.js'
 import { generateConfigFromPackageJson } from './utils/generatePackageJsonConfig.js'
 import { print } from './utils/print.js'
 import { readPackage } from 'read-pkg';
@@ -119,8 +119,14 @@ export default class DefaultCommand extends Command {
       value: { name: 'Setup', isSetup: true }
     }
 
+    const autocompleteCommand = {
+      name: 'Autocomplete',
+      description: 'Install autocompletions for the CLI',
+      value: { name: 'Autocomplete' }
+    }
+
     // check if args match a command
-    const comms = hasSetupStep ? [...configData.commands, setupCommand] : configData.commands;
+    const comms = hasSetupStep ? [...configData.commands, setupCommand, autocompleteCommand] : [...configData.commands, autocompleteCommand];
     const commandMatch = findCommand(comms, argsPath);
 
     print(argsPath, commandMatch)
@@ -133,6 +139,9 @@ export default class DefaultCommand extends Command {
       if (hasSetupStep && commandMatch.command.name === 'Setup') {
         return runSetup(configData.setup!!);
       }
+      if (commandMatch.command.name === 'Autocomplete') {
+        return runSetup(configData.setup!!);
+      }
       await interpretCommand(commandMatch.command, configData?.setup?.configFileDirname || '', commandMatch.cwd ? [commandMatch.cwd] : undefined);
       return;
     }
@@ -140,9 +149,11 @@ export default class DefaultCommand extends Command {
 
     if (!providedPackageJson) {
       const description = configData.description ? ` - ${configData.description}` : ''
-      
+
       console.log(`${configData.name} ${description}`)
-      console.log(`version ${version}\n`)
+      if (version?.length > 0) {
+        console.log(`version ${version}\n`)
+      }
     }
 
     // Present task options to user
@@ -154,8 +165,9 @@ export default class DefaultCommand extends Command {
           description: task.description,
           value: task
         })),
-        setupCommand
-      ] : configData.commands.map((task: any) => ({
+        setupCommand,
+        autocompleteCommand
+      ] : [...configData.commands].map((task: any) => ({
         name: `${task.name}`,
         description: task.description,
         value: task
@@ -164,6 +176,10 @@ export default class DefaultCommand extends Command {
 
     if (selectedTask.isSetup) {
       return runSetup(configData.setup!!);
+    }
+
+    if (selectedTask.name === 'Autocomplete') {
+      return runAutocomplete(configData)
     }
 
     await interpretCommand(selectedTask, configData?.setup?.configFileDirname || '');
