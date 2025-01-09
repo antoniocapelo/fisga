@@ -28,7 +28,7 @@ _${cliName}_completion() {
       completion += `\n        ${cmdName})\n`;
       if (cmd.commands) {
         const subcommands = cmd.commands.map(c => c.name.toLowerCase().replace(/\s+/g, '-')).join(' ');
-        completion += `            commands="${subcommands};;"\n`;
+        completion += `            commands="${subcommands}"\n;;`;
         addCommandContext(cmd.commands, fullPath);
       }
       completion += `            ;;\n`;
