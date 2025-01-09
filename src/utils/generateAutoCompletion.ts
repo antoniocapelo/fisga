@@ -28,7 +28,7 @@ _${cliName}_completion() {
       completion += `\n        ${cmdName})\n`;
       if (cmd.commands) {
         const subcommands = cmd.commands.map(c => c.name.toLowerCase().replace(/\s+/g, '-')).join(' ');
-        completion += `            commands="${subcommands}"\n`;
+        completion += `            commands="${subcommands};;"\n`;
         addCommandContext(cmd.commands, fullPath);
       }
       completion += `            ;;\n`;
@@ -211,17 +211,18 @@ export async function generateCompletions(config: Config, shellType: ShellType, 
   const outputPath = path.join(outputDir, outputFilename);
   try {
     fs.writeFileSync(outputPath, completionContent);
+    console.log(`Generated ${shellType} completion script at: ${outputPath}`);
   } catch (error: any) {
     if (error.code === 'EACCES') {
       const localPath = path.join(process.cwd(), path.basename(outputPath));
       fs.writeFileSync(localPath, completionContent);
       console.log(`Warning: Permission denied when writing to the shell folder. Writing to current directory instead: ${localPath}`);
+      console.log(`Generated ${shellType} completion script.`);
     } else {
       throw error;
     }
   }
 
-  console.log(`Generated ${shellType} completion script at: ${outputPath}`);
 
   // Add shell-specific instructions
   console.log('\nSetup instructions:');
