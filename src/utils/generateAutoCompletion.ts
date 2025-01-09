@@ -16,57 +16,34 @@ _${cliName}_completion() {
     local cur prev words cword
     _get_comp_words_by_ref -n : cur prev words cword
 
-    # Get all commands
-    local commands="`;
+    # Get commands based on current context
+    local commands=""
+    case "$prev" in`;
 
-  // Function to recursively get all commands
-  function getAllCommands(cmds: ICommand[], prefix = ''): string[] {
-    return cmds.flatMap(cmd => {
-      const cmdName = cmd.name.toLowerCase().replace(/\s+/g, '-');
-      const fullCmd = prefix ? `${prefix} ${cmdName}` : cmdName;
-      if (cmd.commands) {
-        return [cmdName, ...getAllCommands(cmd.commands, cmdName)];
-      }
-      return [cmdName];
-    });
-  }
-
-  completion += getAllCommands(config.commands).join(' ');
-  completion += '"';
-
-  // Add argument completion for each command
-  completion += `\n\n    case "$prev" in\n`;
-
-  function addCommandArgs(cmds: ICommand[], prefix = '') {
+  function addCommandContext(cmds: ICommand[], parentPath = '') {
     cmds.forEach(cmd => {
       const cmdName = cmd.name.toLowerCase().replace(/\s+/g, '-');
-      if (cmd.args) {
-        completion += `        ${cmdName})\n`;
-        completion += `            local opts="\n`;
-        Object.entries(cmd.args).forEach(([name, arg]) => {
-          if (arg.type === 'boolean') {
-            completion += `                --${name}\n`;
-          } else {
-            completion += `                --${name}=\n`;
-          }
-        });
-        completion += `            "\n`;
-        completion += `            COMPREPLY=($(compgen -W "$opts" -- "$cur"))\n`;
-        completion += `            return 0\n`;
-        completion += `            ;;\n`;
-      }
+      const fullPath = parentPath ? `${parentPath} ${cmdName}` : cmdName;
+
+      completion += `\n        ${cmdName})\n`;
       if (cmd.commands) {
-        addCommandArgs(cmd.commands, cmdName);
+        const subcommands = cmd.commands.map(c => c.name.toLowerCase().replace(/\s+/g, '-')).join(' ');
+        completion += `            commands="${subcommands}"\n`;
+        addCommandContext(cmd.commands, fullPath);
       }
+      completion += `            ;;\n`;
     });
   }
 
-  addCommandArgs(config.commands);
-  completion += `    esac\n\n`;
+  addCommandContext(config.commands);
+
+  // Root level commands
+  completion += `        *)\n`;
+  completion += `            commands="${config.commands.map(c => c.name.toLowerCase().replace(/\s+/g, '-')).join(' ')}"\n`;
+  completion += `            ;;\n    esac\n\n`;
 
   // Complete command names
-  completion += `    # Complete command names
-    if [[ "$cur" == -* ]]; then
+  completion += `    if [[ "$cur" == -* ]]; then
         return 0
     fi
 
@@ -84,66 +61,44 @@ function generateZshCompletions(config: Config): string {
   const cliName = config.name.toLowerCase();
   let completion = `#compdef ${cliName}
 
-_${cliName}() {
-    local line state
+_${cliName}_commands() {
+    local -a commands
+    
+    case "$words[1]" in`;
 
-    _arguments -C \\
-        "1: :->cmds" \\
-        "*::arg:->args"
-
-    case "$state" in
-        cmds)
-            _values "commands" \\\n`;
-
-  function addCommands(cmds: ICommand[], level = 1) {
+  function addCommandContext(cmds: ICommand[], level = 1) {
     cmds.forEach(cmd => {
       const cmdName = cmd.name.toLowerCase().replace(/\s+/g, '-');
-      const indent = '    '.repeat(level);
-      completion += `${indent}'${cmdName}[${cmd.description}]' \\\n`;
-
+      completion += `\n        ${cmdName})\n            commands=(\n`;
       if (cmd.commands) {
-        addCommands(cmd.commands, level + 1);
-      }
-    });
-  }
-
-  addCommands(config.commands);
-
-  completion += `            ;;
-        args)
-            case $line[1] in\n`;
-
-  function addCommandArgs(cmds: ICommand[]) {
-    cmds.forEach(cmd => {
-      const cmdName = cmd.name.toLowerCase().replace(/\s+/g, '-');
-      if (cmd.args) {
-        completion += `                ${cmdName})\n`;
-        completion += `                    _arguments \\\n`;
-        Object.entries(cmd.args).forEach(([name, arg]) => {
-          const required = arg.required ? '' : ':';
-          if (arg.type === 'boolean') {
-            completion += `                        '--${name}[${arg.description}]' \\\n`;
-          } else {
-            completion += `                        '--${name}${required}[${arg.description}]:${name}' \\\n`;
-          }
+        cmd.commands.forEach(subcmd => {
+          const subcmdName = subcmd.name.toLowerCase().replace(/\s+/g, '-');
+          completion += `                "${subcmdName}:${subcmd.description}"\n`;
         });
-        completion += `                    ;;\n`;
       }
-      if (cmd.commands) {
-        addCommandArgs(cmd.commands);
-      }
+      completion += `            )\n            ;;`;
     });
   }
 
-  addCommandArgs(config.commands);
+  addCommandContext(config.commands);
 
-  completion += `            esac
-            ;;
-    esac
+  // Root level
+  completion += `\n        *)\n            commands=(\n`;
+  config.commands.forEach(cmd => {
+    completion += `                "${cmd.name.toLowerCase().replace(/\s+/g, '-')}:${cmd.description}"\n`;
+  });
+  completion += `            )\n            ;;\n    esac\n`;
+
+  completion += `    _describe 'command' commands
 }
 
-_${cliName}
-`;
+_${cliName}() {
+    _arguments -C \
+        '1: :_${cliName}_commands' \
+        '*::arg:->args'
+}
+
+_${cliName}`;
 
   return completion;
 }
@@ -157,28 +112,14 @@ function generateFishCompletions(config: Config): string {
       const cmdName = cmd.name.toLowerCase().replace(/\s+/g, '-');
       const fullCmd = parentCmd ? `${parentCmd} ${cmdName}` : cmdName;
 
-      // Add command completion
-      completion += `complete -c ${cliName} -f -n "__fish_use_subcommand" -a "${cmdName}" -d "${cmd.description}"\n`;
-
-      // Add argument completions
-      if (cmd.args) {
-        Object.entries(cmd.args).forEach(([name, arg]) => {
-          const condition = parentCmd
-            ? `__fish_seen_subcommand_from ${parentCmd.split(' ').join(' ')} ${cmdName}`
-            : `__fish_seen_subcommand_from ${cmdName}`;
-
-          if (arg.type === 'boolean') {
-            completion += `complete -c ${cliName} -f -n "${condition}" -l "${name}" -d "${arg.description}"\n`;
-          } else if (arg.type === 'regexp' && arg.glob) {
-            // Add file completion for glob patterns
-            completion += `complete -c ${cliName} -f -n "${condition}" -l "${name}" -d "${arg.description}" -r\n`;
-          } else {
-            completion += `complete -c ${cliName} -f -n "${condition}" -l "${name}" -d "${arg.description}" -r\n`;
-          }
-        });
+      if (parentCmd) {
+        // Subcommand completion
+        completion += `complete -c ${cliName} -f -n "__fish_seen_subcommand_from ${parentCmd}" -a "${cmdName}" -d "${cmd.description}"\n`;
+      } else {
+        // Root command completion
+        completion += `complete -c ${cliName} -f -n "__fish_use_subcommand" -a "${cmdName}" -d "${cmd.description}"\n`;
       }
 
-      // Recursively add subcommands
       if (cmd.commands) {
         addCommands(cmd.commands, fullCmd);
       }
@@ -186,7 +127,6 @@ function generateFishCompletions(config: Config): string {
   }
 
   addCommands(config.commands);
-
   return completion;
 }
 

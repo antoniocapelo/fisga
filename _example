@@ -1,0 +1,38 @@
+#compdef example
+
+_example_commands() {
+    local -a commands
+    
+    case "$words[1]" in
+        conditional-logging)
+            commands=(
+            )
+            ;;
+        git)
+            commands=(
+                "add:Stage changes"
+                "commit:Commit changes"
+                "push:Push changes"
+            )
+            ;;
+        docker)
+            commands=(
+                "build:Build container"
+            )
+            ;;
+        *)
+            commands=(
+                "conditional-logging:some test"
+                "git:Git related commands"
+                "docker:Docker related commands"
+            )
+            ;;
+    esac
+    _describe 'command' commands
+}
+
+_example() {
+    _arguments -C         '1: :_example_commands'         '*::arg:->args'
+}
+
+_example

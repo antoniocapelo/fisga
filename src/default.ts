@@ -142,6 +142,7 @@ export default class DefaultCommand extends Command {
 
     if (argsPath.length > 1 && !commandMatch) {
       console.log(`\nUnknown command "${argsPath}"\n`)
+      process.exit(1)
     }
 
     if (!!commandMatch) {
