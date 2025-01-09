@@ -1,5 +1,6 @@
 {
     "$schema": "../schema/fisga-config.schema.json",
+    "generateAutocomplete": true,
     "setup": {
         "configFileDirname": "$HOME/.config/fisga/",
         "steps": [

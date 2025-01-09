@@ -63,6 +63,7 @@ export type Config = {
   setup?: Setup
   name: string;
   description?: string;
+  generateAutocomplete?: boolean;
 }
 
 export interface SetupStep {

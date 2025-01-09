@@ -88,6 +88,29 @@ export default class DefaultCommand extends Command {
 
 
     const hasSetupStep = !!configData.setup;
+    const hasAutocompleteStep = !!configData.generateAutocomplete;
+
+    const setupCommand = {
+      name: 'Setup',
+      description: 'Run the user setup step',
+      value: { name: 'Setup', isSetup: true }
+    }
+
+    const autocompleteCommand = {
+      name: 'Autocomplete',
+      description: 'Install autocompletions for the CLI',
+      value: { name: 'Autocomplete' }
+    }
+
+    // check if args match a command
+    const comms = [...configData.commands];
+    if (hasSetupStep) {
+      comms.push(setupCommand)
+    }
+
+    if (hasAutocompleteStep) {
+      comms.push(autocompleteCommand)
+    }
 
     if (hasSetupStep) {
       // Determine user config path from setup.dir
@@ -113,20 +136,6 @@ export default class DefaultCommand extends Command {
       }
     }
 
-    const setupCommand = {
-      name: 'Setup',
-      description: 'Run the user setup step',
-      value: { name: 'Setup', isSetup: true }
-    }
-
-    const autocompleteCommand = {
-      name: 'Autocomplete',
-      description: 'Install autocompletions for the CLI',
-      value: { name: 'Autocomplete' }
-    }
-
-    // check if args match a command
-    const comms = hasSetupStep ? [...configData.commands, setupCommand, autocompleteCommand] : [...configData.commands, autocompleteCommand];
     const commandMatch = findCommand(comms, argsPath);
 
     print(argsPath, commandMatch)
@@ -159,19 +168,11 @@ export default class DefaultCommand extends Command {
     // Present task options to user
     const selectedTask: any = await select({
       message: 'Select a task to run:',
-      choices: hasSetupStep ? [
-        ...configData.commands.map((task: any) => ({
-          name: `${task.name}`,
-          description: task.description,
-          value: task
-        })),
-        setupCommand,
-        autocompleteCommand
-      ] : [...configData.commands].map((task: any) => ({
+      choices: comms.map((task: any) => ({
         name: `${task.name}`,
         description: task.description,
         value: task
-      }))
+      })),
     });
 
     if (selectedTask.isSetup) {

@@ -1,11 +1,19 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "required": ["setup", "commands"],
+  "required": [
+    "commands"
+  ],
   "properties": {
+    "generateAutocomplete": {
+      "type": "boolean"
+    },
     "setup": {
       "type": "object",
-      "required": ["configFileDirname", "steps"],
+      "required": [
+        "configFileDirname",
+        "steps"
+      ],
       "properties": {
         "configFileDirname": {
           "type": "string",
@@ -15,14 +23,23 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["name", "type", "description"],
+            "required": [
+              "name",
+              "type",
+              "description"
+            ],
             "properties": {
               "name": {
                 "type": "string",
                 "description": "Identifier for the config value"
               },
               "type": {
-                "enum": ["input", "confirm", "select", "checkbox"],
+                "enum": [
+                  "input",
+                  "confirm",
+                  "select",
+                  "checkbox"
+                ],
                 "description": "Type of input to collect"
               },
               "description": {
@@ -48,7 +65,10 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["name", "description"],
+        "required": [
+          "name",
+          "description"
+        ],
         "properties": {
           "name": {
             "type": "string",
@@ -70,10 +90,20 @@
             "type": "object",
             "additionalProperties": {
               "type": "object",
-              "required": ["type", "description"],
+              "required": [
+                "type",
+                "description"
+              ],
               "properties": {
                 "type": {
-                  "enum": ["input", "confirm", "select", "checkbox", "regexp", "boolean"],
+                  "enum": [
+                    "input",
+                    "confirm",
+                    "select",
+                    "checkbox",
+                    "regexp",
+                    "boolean"
+                  ],
                   "description": "Type of argument"
                 },
                 "description": {
@@ -117,4 +147,4 @@
       }
     }
   }
-} 
+}
