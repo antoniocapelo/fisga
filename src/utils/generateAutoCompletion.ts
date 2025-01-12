@@ -13,47 +13,42 @@ function generateBashCompletions(config: Config): string {
 #/usr/bin/env bash
 
 _${cliName}_completion() {
-    local cur prev words cword
-    _get_comp_words_by_ref -n : cur prev words cword
+    local cur prev
+    COMPREPLY=()
+    cur="${'$'}{COMP_WORDS[COMP_CWORD]}"
+    prev="${'$'}{COMP_WORDS[COMP_CWORD-1]}"
+    
+    case "${'$'}{COMP_WORDS[1]}" in`;
 
-    # Get commands based on current context
-    local commands=""
-    case "$prev" in`;
-
-  function addCommandContext(cmds: ICommand[], parentPath = '') {
+  function addCommandContext(cmds: ICommand[]) {
     cmds.forEach(cmd => {
       const cmdName = cmd.name.toLowerCase().replace(/\s+/g, '-');
-      const fullPath = parentPath ? `${parentPath} ${cmdName}` : cmdName;
 
-      completion += `\n        ${cmdName})\n`;
+      completion += `\n        "${cmdName}")\n`;
       if (cmd.commands) {
-        const subcommands = cmd.commands.map(c => c.name.toLowerCase().replace(/\s+/g, '-')).join(' ');
-        completion += `            commands="${subcommands}";;\n`;
-        addCommandContext(cmd.commands, fullPath);
-      } else {
-        completion += `            ;;\n`;
+        completion += `            case "${'$'}{COMP_WORDS[2]}" in\n`;
+        completion += `                "")\n                    COMPREPLY=( $(compgen -W "`;
+        completion += cmd.commands.map(subcmd =>
+          subcmd.name.toLowerCase().replace(/\s+/g, '-')
+        ).join(' ');
+        completion += `" -- "${'$'}{cur}") )\n                    return 0\n                    ;;\n`;
+        completion += `            esac\n`;
       }
+      completion += `            return 0\n            ;;\n`;
     });
   }
 
   addCommandContext(config.commands);
 
   // Root level commands
-  completion += `        *)\n`;
-  completion += `            commands="${config.commands.map(c => c.name.toLowerCase().replace(/\s+/g, '-')).join(' ')}"\n`;
-  completion += `            ;;\n    esac\n\n`;
-
-  // Complete command names
-  completion += `    if [[ "$cur" == -* ]]; then
-        return 0
-    fi
-
-    COMPREPLY=($(compgen -W "$commands" -- "$cur"))
-    return 0
+  completion += `        *)\n            COMPREPLY=( $(compgen -W "`;
+  completion += config.commands.map(cmd =>
+    cmd.name.toLowerCase().replace(/\s+/g, '-')
+  ).join(' ');
+  completion += `" -- "${'$'}{cur}") )\n            return 0\n            ;;\n    esac
 }
 
-complete -F _${cliName}_completion ${cliName}
-`;
+complete -F _${cliName}_completion ${cliName}`;
 
   return completion;
 }
@@ -64,20 +59,32 @@ function generateZshCompletions(config: Config): string {
 
 _${cliName}_commands() {
     local -a commands
-    
-    case "$words[1]" in`;
+    local context="${'$'}words[1]"
+    local subcontext="${'$'}words[2]"
 
-  function addCommandContext(cmds: ICommand[], level = 1) {
+    case "${'$'}context" in`;
+
+  function addCommandContext(cmds: ICommand[], parentPath = '') {
     cmds.forEach(cmd => {
       const cmdName = cmd.name.toLowerCase().replace(/\s+/g, '-');
-      completion += `\n        ${cmdName})\n            commands=(\n`;
-      if (cmd.commands) {
-        cmd.commands.forEach(subcmd => {
-          const subcmdName = subcmd.name.toLowerCase().replace(/\s+/g, '-');
-          completion += `                "${subcmdName}:${subcmd.description}"\n`;
-        });
+
+      if (!parentPath) {
+        // Root level command
+        completion += `\n        "${cmdName}")\n            case "${'$'}subcontext" in\n`;
+        if (cmd.commands) {
+          completion += `                *)\n                    commands=(\n`;
+          cmd.commands.forEach(subcmd => {
+            const subcmdName = subcmd.name.toLowerCase().replace(/\s+/g, '-');
+            completion += `                        "${subcmdName}:${subcmd.description}"\n`;
+          });
+          completion += `                    )\n                    ;;\n`;
+        }
+        completion += `            esac\n            ;;`;
       }
-      completion += `            )\n            ;;`;
+
+      if (cmd.commands) {
+        addCommandContext(cmd.commands, cmdName);
+      }
     });
   }
 
@@ -94,9 +101,18 @@ _${cliName}_commands() {
 }
 
 _${cliName}() {
+    local curcontext="${'$'}curcontext" state line
+    typeset -A opt_args
+
     _arguments -C \
         '1: :_${cliName}_commands' \
         '*::arg:->args'
+
+    case $state in
+        args)
+            _${cliName}_commands
+            ;;
+    esac
 }
 
 _${cliName}`;
@@ -108,26 +124,20 @@ function generateFishCompletions(config: Config): string {
   const cliName = config.name.toLowerCase();
   let completion = `# Fish completion for ${config.name}\n\n`;
 
-  function addCommands(cmds: ICommand[], parentCmd = '') {
-    cmds.forEach(cmd => {
-      const cmdName = cmd.name.toLowerCase().replace(/\s+/g, '-');
-      const fullCmd = parentCmd ? `${parentCmd} ${cmdName}` : cmdName;
+  // Root level commands
+  config.commands.forEach(cmd => {
+    const cmdName = cmd.name.toLowerCase().replace(/\s+/g, '-');
+    completion += `complete -c ${cliName} -f -n "__fish_use_subcommand" -a "${cmdName}" -d "${cmd.description}"\n`;
 
-      if (parentCmd) {
-        // Subcommand completion
-        completion += `complete -c ${cliName} -f -n "__fish_seen_subcommand_from ${parentCmd}" -a "${cmdName}" -d "${cmd.description}"\n`;
-      } else {
-        // Root command completion
-        completion += `complete -c ${cliName} -f -n "__fish_use_subcommand" -a "${cmdName}" -d "${cmd.description}"\n`;
-      }
+    if (cmd.commands) {
+      // Subcommands
+      cmd.commands.forEach(subcmd => {
+        const subcmdName = subcmd.name.toLowerCase().replace(/\s+/g, '-');
+        completion += `complete -c ${cliName} -f -n "__fish_seen_subcommand_from ${cmdName}" -a "${subcmdName}" -d "${subcmd.description}"\n`;
+      });
+    }
+  });
 
-      if (cmd.commands) {
-        addCommands(cmd.commands, fullCmd);
-      }
-    });
-  }
-
-  addCommands(config.commands);
   return completion;
 }
 
@@ -210,14 +220,16 @@ export async function generateCompletions(config: Config, shellType: ShellType, 
 
   // Write the completion file
   const outputPath = path.join(outputDir, outputFilename);
+  let permissionError = false;
   try {
     fs.writeFileSync(outputPath, completionContent);
     console.log(`Generated ${shellType} completion script at: ${outputPath}`);
   } catch (error: any) {
     if (error.code === 'EACCES') {
+      permissionError = true;
       const localPath = path.join(process.cwd(), path.basename(outputPath));
       fs.writeFileSync(localPath, completionContent);
-      console.log(`Warning: Permission denied when writing to the shell folder. Writing to current directory instead: ${localPath}`);
+      console.log(`Warning: Permission denied when writing to the shell folder (${outputDir}).\nWriting to current directory instead: ${localPath}`);
       console.log(`Generated ${shellType} completion script.`);
     } else {
       throw error;
@@ -227,6 +239,9 @@ export async function generateCompletions(config: Config, shellType: ShellType, 
 
   // Add shell-specific instructions
   console.log('\nSetup instructions:');
+  if (permissionError) {
+    console.log(`Move the generated file to the ${outputDir}.`)
+  }
   switch (shellType) {
     case 'bash':
       console.log(`1. Add the following line to your ~/.bashrc:`);
