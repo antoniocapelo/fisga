@@ -3,9 +3,9 @@ import * as path from 'path';
 import * as os from 'os';
 import { Config, ICommand } from '../types.js';
 
-type ShellType = 'bash' | 'zsh' | 'fish';
+type ShellType = 'bash' | 'zsh' | 'fish' | 'powershell';
 
-export const supportedShells: ShellType[] = ['bash', 'zsh', 'fish']
+export const supportedShells: ShellType[] = ['bash', 'zsh', 'fish', 'powershell']
 
 function generateBashCompletions(config: Config): string {
   const cliName = config.name.toLowerCase();
@@ -13,28 +13,32 @@ function generateBashCompletions(config: Config): string {
 #/usr/bin/env bash
 
 _${cliName}_completion() {
-    local cur prev
+    local cur prev words
     COMPREPLY=()
     cur="${'$'}{COMP_WORDS[COMP_CWORD]}"
     prev="${'$'}{COMP_WORDS[COMP_CWORD-1]}"
+    words="${'$'}{COMP_WORDS[@]:1:$COMP_CWORD-1}"
     
-    case "${'$'}{COMP_WORDS[1]}" in`;
+    case "$words" in`;
 
-  function addCommandContext(cmds: ICommand[]) {
+  function addCommandContext(cmds: ICommand[], parentPath = '') {
     cmds.forEach(cmd => {
       const cmdName = cmd.name.toLowerCase().replace(/\s+/g, '-');
+      const fullPath = parentPath ? `${parentPath} ${cmdName}` : cmdName;
 
-      completion += `\n        "${cmdName}")\n`;
+      completion += `\n        "${fullPath}")\n`;
       if (cmd.commands) {
-        completion += `            case "${'$'}{COMP_WORDS[2]}" in\n`;
-        completion += `                "")\n                    COMPREPLY=( $(compgen -W "`;
+        completion += `            COMPREPLY=( $(compgen -W "`;
         completion += cmd.commands.map(subcmd =>
           subcmd.name.toLowerCase().replace(/\s+/g, '-')
         ).join(' ');
-        completion += `" -- "${'$'}{cur}") )\n                    return 0\n                    ;;\n`;
-        completion += `            esac\n`;
+        completion += `" -- "${'$'}{cur}") )\n            return 0\n`;
       }
-      completion += `            return 0\n            ;;\n`;
+      completion += `            ;;\n`;
+
+      if (cmd.commands) {
+        addCommandContext(cmd.commands, fullPath);
+      }
     });
   }
 
@@ -45,7 +49,8 @@ _${cliName}_completion() {
   completion += config.commands.map(cmd =>
     cmd.name.toLowerCase().replace(/\s+/g, '-')
   ).join(' ');
-  completion += `" -- "${'$'}{cur}") )\n            return 0\n            ;;\n    esac
+  completion += `" -- "${'$'}{cur}") )\n            ;;\n    esac
+    return 0
 }
 
 complete -F _${cliName}_completion ${cliName}`;
@@ -59,31 +64,28 @@ function generateZshCompletions(config: Config): string {
 
 _${cliName}_commands() {
     local -a commands
-    local context="${'$'}words[1]"
-    local subcontext="${'$'}words[2]"
+    local cmd="${'$'}words[1,-2]"
 
-    case "${'$'}context" in`;
+    case "$cmd" in`;
 
   function addCommandContext(cmds: ICommand[], parentPath = '') {
     cmds.forEach(cmd => {
       const cmdName = cmd.name.toLowerCase().replace(/\s+/g, '-');
+      const fullPath = parentPath ? `${parentPath} ${cmdName}` : cmdName;
 
-      if (!parentPath) {
-        // Root level command
-        completion += `\n        "${cmdName}")\n            case "${'$'}subcontext" in\n`;
-        if (cmd.commands) {
-          completion += `                *)\n                    commands=(\n`;
-          cmd.commands.forEach(subcmd => {
-            const subcmdName = subcmd.name.toLowerCase().replace(/\s+/g, '-');
-            completion += `                        "${subcmdName}:${subcmd.description}"\n`;
-          });
-          completion += `                    )\n                    ;;\n`;
-        }
-        completion += `            esac\n            ;;`;
+      completion += `\n        "${fullPath}")\n`;
+      if (cmd.commands) {
+        completion += `            commands=(\n`;
+        cmd.commands.forEach(subcmd => {
+          const subcmdName = subcmd.name.toLowerCase().replace(/\s+/g, '-');
+          completion += `                "${subcmdName}:${subcmd.description}"\n`;
+        });
+        completion += `            )\n`;
       }
+      completion += `            ;;\n`;
 
       if (cmd.commands) {
-        addCommandContext(cmd.commands, cmdName);
+        addCommandContext(cmd.commands, fullPath);
       }
     });
   }
@@ -124,19 +126,112 @@ function generateFishCompletions(config: Config): string {
   const cliName = config.name.toLowerCase();
   let completion = `# Fish completion for ${config.name}\n\n`;
 
-  // Root level commands
-  config.commands.forEach(cmd => {
-    const cmdName = cmd.name.toLowerCase().replace(/\s+/g, '-');
-    completion += `complete -c ${cliName} -f -n "__fish_use_subcommand" -a "${cmdName}" -d "${cmd.description}"\n`;
+  function addCommandContext(cmds: ICommand[], parentCmd = '') {
+    cmds.forEach(cmd => {
+      const cmdName = cmd.name.toLowerCase().replace(/\s+/g, '-');
+      const fullCmd = parentCmd ? `${parentCmd} ${cmdName}` : cmdName;
 
-    if (cmd.commands) {
-      // Subcommands
-      cmd.commands.forEach(subcmd => {
-        const subcmdName = subcmd.name.toLowerCase().replace(/\s+/g, '-');
-        completion += `complete -c ${cliName} -f -n "__fish_seen_subcommand_from ${cmdName}" -a "${subcmdName}" -d "${subcmd.description}"\n`;
-      });
+      if (parentCmd) {
+        completion += `complete -c ${cliName} -f -n "__fish_seen_subcommand_from ${parentCmd}" -a "${cmdName}" -d "${cmd.description}"\n`;
+      } else {
+        completion += `complete -c ${cliName} -f -n "__fish_use_subcommand" -a "${cmdName}" -d "${cmd.description}"\n`;
+      }
+
+      if (cmd.commands) {
+        addCommandContext(cmd.commands, fullCmd);
+      }
+    });
+  }
+
+  addCommandContext(config.commands);
+  return completion;
+}
+
+function generatePowerShellCompletions(config: Config): string {
+  const cliName = config.name.toLowerCase();
+  let completion = `
+# PowerShell completion for ${config.name}
+
+Register-ArgumentCompleter -Native -CommandName ${cliName} -ScriptBlock {
+    param($wordToComplete, $commandAst, $cursorPosition)
+    
+    $commandElements = $commandAst.CommandElements
+    $command = @(
+        $commandElements | 
+        Select-Object -First 1 | 
+        ForEach-Object { $_.ToString() }
+    )
+
+    $commandArgs = @(
+        $commandElements | 
+        Select-Object -Skip 1 | 
+        ForEach-Object { $_.ToString() }
+    )
+
+    function Get-Completions {
+        param (
+            [array]$Commands,
+            [array]$CurrentPath
+        )
+        
+        if ($CurrentPath.Count -eq 0) {
+            return $Commands | ForEach-Object {
+                [System.Management.Automation.CompletionResult]::new(
+                    $_.name.ToLower() -replace '\s+','-',
+                    $_.name.ToLower() -replace '\s+','-',
+                    'ParameterValue',
+                    $_.description
+                )
+            }
+        }
+
+        $currentCommand = $Commands | Where-Object { 
+            $_.name.ToLower() -replace '\s+','-' -eq $CurrentPath[0] 
+        }
+
+        if ($currentCommand -and $currentCommand.commands) {
+            return Get-Completions -Commands $currentCommand.commands -CurrentPath $CurrentPath[1..($CurrentPath.Count-1)]
+        }
+
+        return @()
     }
-  });
+
+    $completions = Get-Completions -Commands ${cliName}_config.commands -CurrentPath $commandArgs
+
+    if ($wordToComplete) {
+        $completions.Where{ $_.CompletionText -like "$wordToComplete*" }
+    }
+    else {
+        $completions
+    }
+}
+
+# Store config for use in completion
+$${cliName}_config = @{
+    commands = @(`;
+
+  function addCommands(cmds: ICommand[]) {
+    let result = '';
+    cmds.forEach(cmd => {
+      result += `
+        @{
+            name = '${cmd.name}'
+            description = '${cmd.description}'`;
+      if (cmd.commands) {
+        result += `
+            commands = @(${addCommands(cmd.commands)}
+            )`;
+      }
+      result += `
+        }`;
+    });
+    return result;
+  }
+
+  completion += addCommands(config.commands);
+  completion += `
+    )
+}`;
 
   return completion;
 }
@@ -214,6 +309,10 @@ export async function generateCompletions(config: Config, shellType: ShellType, 
       completionContent = generateFishCompletions(config);
       outputFilename = `${config.name.toLowerCase()}.fish`;
       break;
+    case 'powershell':
+      completionContent = generatePowerShellCompletions(config);
+      outputFilename = `${config.name.toLowerCase()}.ps1`;
+      break;
     default:
       throw new Error(`Unsupported shell type: ${shellType}`);
   }
@@ -256,6 +355,12 @@ export async function generateCompletions(config: Config, shellType: ShellType, 
     case 'fish':
       console.log('Completions will be automatically loaded on next shell start');
       console.log('To load immediately, run: source ~/.config/fish/completions/*');
+      break;
+    case 'powershell':
+      console.log('\nSetup instructions:');
+      console.log('1. Add the following line to your PowerShell profile ($PROFILE):');
+      console.log(`   . "${outputPath}"`);
+      console.log('2. Reload your PowerShell session');
       break;
   }
 }
