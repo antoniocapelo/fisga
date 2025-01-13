@@ -324,15 +324,15 @@ export async function generateCompletions(config: Config, shellType: ShellType, 
     fs.writeFileSync(outputPath, completionContent);
     console.log(`Generated ${shellType} completion script at: ${outputPath}`);
   } catch (error: any) {
-    if (error.code === 'EACCES') {
+    // if (error.code === 'EACCES') {
       permissionError = true;
       const localPath = path.join(process.cwd(), path.basename(outputPath));
       fs.writeFileSync(localPath, completionContent);
       console.log(`Warning: Permission denied when writing to the shell folder (${outputDir}).\nWriting to current directory instead: ${localPath}`);
       console.log(`Generated ${shellType} completion script.`);
-    } else {
-      throw error;
-    }
+    // } else {
+    //   throw error;
+    // }
   }
 
 
