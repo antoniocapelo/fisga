@@ -177,7 +177,7 @@ export default class DefaultCommand extends Command {
       const description = configData.description ? ` - ${configData.description}` : ''
 
       console.log(`${configData.name} ${description}`)
-      if (version?.length > 0) {
+      if (version && version.length > 0) {
         console.log(`version ${version}\n`)
       }
     }
