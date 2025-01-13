@@ -33,6 +33,10 @@ export default class DefaultCommand extends Command {
       char: 'v',
       description: 'Show CLI version',
     }),
+    'cli-version': Flags.string({
+      description: 'Set CLI version',
+      required: false,
+    }),
   };
 
   static description = 'Run commands from a config file or generates them based on a package json'
@@ -48,9 +52,12 @@ export default class DefaultCommand extends Command {
   async run(): Promise<void> {
     const { argv, flags } = await this.parse(DefaultCommand)
 
+    // Use provided CLI version or fallback to package.json version
+    const cliVersion = flags['cli-version'] || version
+
     // Handle version flag first
     if (flags.version) {
-      console.log(version || 'Version information not available')
+      console.log(cliVersion || 'Version information not available')
       return
     }
 
@@ -177,8 +184,8 @@ export default class DefaultCommand extends Command {
       const description = configData.description ? ` - ${configData.description}` : ''
 
       console.log(`${configData.name} ${description}`)
-      if (version && version.length > 0) {
-        console.log(`version ${version}\n`)
+      if (cliVersion && cliVersion.length > 0) {
+        console.log(`version ${cliVersion}\n`)
       }
     }
 
