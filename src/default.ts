@@ -8,11 +8,11 @@ import { Config } from './types.js'
 import { interpretCommand, runAutocomplete, runSetup } from './utils/interpretCommand.js'
 import { generateConfigFromPackageJson } from './utils/generatePackageJsonConfig.js'
 import { print } from './utils/print.js'
-import { readPackage } from 'read-pkg';
+// import { readPackage } from 'read-pkg';
 
-const pkg = await readPackage()
+// const pkg = await readPackage()
 
-const version = pkg.version;
+const version = ''
 
 export default class DefaultCommand extends Command {
   static args = {}
