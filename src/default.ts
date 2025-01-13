@@ -8,11 +8,17 @@ import { Config } from './types.js'
 import { interpretCommand, runAutocomplete, runSetup } from './utils/interpretCommand.js'
 import { generateConfigFromPackageJson } from './utils/generatePackageJsonConfig.js'
 import { print } from './utils/print.js'
-// import { readPackage } from 'read-pkg';
+import { readFileSync } from 'fs'
 
-// const pkg = await readPackage()
-
-const version = ''
+// Read package.json for version
+let version: string | undefined
+try {
+  const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
+  version = packageJson?.version
+} catch (error) {
+  // Silently handle missing or invalid package.json
+  version = undefined
+}
 
 export default class DefaultCommand extends Command {
   static args = {}
@@ -22,6 +28,10 @@ export default class DefaultCommand extends Command {
     config: Flags.string({
       description: 'Path to config file',
       required: false,
+    }),
+    version: Flags.boolean({
+      char: 'v',
+      description: 'Show CLI version',
     }),
   };
 
@@ -37,6 +47,12 @@ export default class DefaultCommand extends Command {
 
   async run(): Promise<void> {
     const { argv, flags } = await this.parse(DefaultCommand)
+
+    // Handle version flag first
+    if (flags.version) {
+      console.log(version || 'Version information not available')
+      return
+    }
 
     let configData: Config | undefined = undefined;
 
